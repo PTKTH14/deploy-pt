@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PatientCard from '@/components/PatientCard';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data for demonstration
 const mockPatients = [
@@ -43,6 +43,7 @@ const Patients = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPatients, setFilteredPatients] = useState(mockPatients);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -58,18 +59,20 @@ const Patients = () => {
     }
   };
 
-  const handleSendToPT = (patient: any) => {
+  const handleSendToPT = (patient: any, tableNumber: number) => {
     toast({
       title: "ส่งให้ PT",
-      description: `กำลังส่ง ${patient.full_name} ไปยังโต๊ะ PT`,
+      description: `ส่ง ${patient.full_name} ไปยังโต๊ะ PT ${tableNumber} แล้ว`,
     });
   };
 
   const handleSchedule = (patient: any) => {
     toast({
-      title: "สร้างนัดหมาย",
-      description: `กำลังสร้างนัดหมายสำหรับ ${patient.full_name}`,
+      title: "เปิดฟอร์มนัดหมาย",
+      description: `กำลังเปิดฟอร์มสร้างนัดหมายสำหรับ ${patient.full_name}`,
     });
+    // นำทางไปยังฟอร์มนัดหมายใหม่
+    navigate('/appointments/new', { state: { patient } });
   };
 
   const handleHomeVisit = (patient: any) => {
@@ -79,10 +82,11 @@ const Patients = () => {
     });
   };
 
-  const handleDispenseEquipment = (patient: any) => {
+  const handleDispenseEquipment = (patient: any, equipment: any[]) => {
+    const equipmentList = equipment.map(item => `${item.type} (${item.size})`).join(', ');
     toast({
       title: "จ่ายอุปกรณ์",
-      description: `กำลังบันทึกการจ่ายอุปกรณ์สำหรับ ${patient.full_name}`,
+      description: `จ่ายอุปกรณ์ให้ ${patient.full_name}: ${equipmentList}`,
     });
   };
 
