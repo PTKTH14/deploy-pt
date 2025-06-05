@@ -20,6 +20,9 @@ const Login = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('User changed:', user);
+    console.log('UserProfile changed:', userProfile);
+    
     if (user && userProfile) {
       checkPTStatus();
     }
@@ -36,6 +39,8 @@ const Login = () => {
         .eq('date', today)
         .single();
 
+      console.log('PT Status check:', { data, error, today, userId: userProfile.id });
+
       if (error || !data) {
         setShowPTModal(true);
       } else {
@@ -51,6 +56,7 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log('Starting login process...');
       const { error } = await signIn(username, password);
       
       if (error) {
