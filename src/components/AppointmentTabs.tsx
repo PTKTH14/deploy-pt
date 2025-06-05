@@ -236,14 +236,76 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
             มาตามนัด
           </Button>
           
-          <Button 
-            size="sm" 
-            className="bg-orange-500 hover:bg-orange-600 text-white"
-            onClick={() => setShowReschedule(appointment.id)}
-          >
-            <Clock className="w-4 h-4 mr-1" />
-            เลื่อนนัด
-          </Button>
+          <Popover open={showReschedule === appointment.id} onOpenChange={(open) => setShowReschedule(open ? appointment.id : null)}>
+            <PopoverTrigger asChild>
+              <Button 
+                size="sm" 
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                <Clock className="w-4 h-4 mr-1" />
+                เลื่อนนัด
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-4">
+              <div className="space-y-4">
+                <h4 className="font-medium">เลื่อนนัดหมาย</h4>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">วันที่ใหม่</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !rescheduleDate && "text-muted-foreground"
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {rescheduleDate ? format(rescheduleDate, "dd/MM/yyyy") : "เลือกวันที่"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <CalendarComponent
+                        mode="single"
+                        selected={rescheduleDate}
+                        onSelect={setRescheduleDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">เวลาใหม่</label>
+                  <Input
+                    type="time"
+                    value={rescheduleTime}
+                    onChange={(e) => setRescheduleTime(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleReschedule(appointment.id)}
+                    disabled={!rescheduleDate || !rescheduleTime}
+                    className="bg-yellow-600 hover:bg-yellow-700"
+                  >
+                    ยืนยันการเลื่อน
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setShowReschedule(null)}
+                  >
+                    ยกเลิก
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           
           <Button 
             size="sm" 
