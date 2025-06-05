@@ -4,35 +4,34 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, ArrowRight, Clock } from 'lucide-react';
 
-const AppointmentTabs = () => {
-  const [activeTable, setActiveTable] = useState('table1');
+const CenterTabs = () => {
+  const [activeCenter, setActiveCenter] = useState('taa');
 
-  const appointmentData = {
-    table1: [
+  const centerData = {
+    taa: [
       {
-        name: 'นงนุช คงอาศรี',
-        time: 'วันนี้ 10:00',
-        hn: 'HN 100094',
-        location: 'รพ.สต.ภความิด',
+        name: 'นางสาว สมหญิง ใจดี',
+        time: 'วันนี้ 09:30',
+        hn: 'HN 100001',
+        location: 'รพสต.ต้า',
         status: 'confirmed'
       }
     ],
-    table2: [],
-    table3: [
+    phranet: [
       {
-        name: 'วิทวส นาคร่',
-        time: 'วันนี้ 10:00',
-        hn: 'HN 100599',
-        location: 'รพ.สาพบามิด',
+        name: 'นาย สมชาย รักดี',
+        time: 'วันนี้ 10:15',
+        hn: 'HN 100002',
+        location: 'รพสต.พระเนตร',
         status: 'pending'
       }
     ],
-    summary: [
+    patal: [
       {
-        name: 'สมชาย ใจดี',
-        time: 'วันนี้ 14:00',
-        hn: 'HN 100123',
-        location: 'เคสรวม',
+        name: 'นางสาว สมใจ ดีใจ',
+        time: 'วันนี้ 11:00',
+        hn: 'HN 100003',
+        location: 'ทต.ป่าตาล',
         status: 'confirmed'
       }
     ]
@@ -63,37 +62,41 @@ const AppointmentTabs = () => {
     </Card>
   );
 
-  const tableLabels = ['โต๊ะ 1', 'โต๊ะ 2', 'โต๊ะ 3', 'เคสรวม'];
+  const centerLabels = [
+    { key: 'taa', label: 'รพสต.ต้า' },
+    { key: 'phranet', label: 'รพสต.พระเนตร' },
+    { key: 'patal', label: 'ทต.ป่าตาล' }
+  ];
 
   return (
     <div className="space-y-4">
-      {/* Table Tabs */}
+      {/* Center Tabs */}
       <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-        {tableLabels.map((label, index) => (
+        {centerLabels.map((center) => (
           <button
-            key={index}
-            onClick={() => setActiveTable(index === 3 ? 'summary' : `table${index + 1}`)}
+            key={center.key}
+            onClick={() => setActiveCenter(center.key)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTable === (index === 3 ? 'summary' : `table${index + 1}`)
+              activeCenter === center.key
                 ? 'bg-white text-blue-600 shadow-sm border-b-2 border-blue-600'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            {label}
+            {center.label}
           </button>
         ))}
       </div>
 
-      {/* Appointment Content */}
+      {/* Center Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          {appointmentData[activeTable as keyof typeof appointmentData]?.length > 0 ? (
-            appointmentData[activeTable as keyof typeof appointmentData].map((appointment, index) =>
+          {centerData[activeCenter as keyof typeof centerData]?.length > 0 ? (
+            centerData[activeCenter as keyof typeof centerData].map((appointment, index) =>
               renderAppointmentCard(appointment, index)
             )
           ) : (
             <Card className="p-8 text-center text-gray-500">
-              <p>ไม่มีนัดหมายในโต๊ะนี้</p>
+              <p>ไม่มีนัดหมายในศูนย์บริการนี้</p>
             </Card>
           )}
         </div>
@@ -102,4 +105,4 @@ const AppointmentTabs = () => {
   );
 };
 
-export default AppointmentTabs;
+export default CenterTabs;

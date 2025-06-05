@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import AppointmentForm from '@/components/AppointmentForm';
 import AppointmentTabs from '@/components/AppointmentTabs';
 import AppointmentCalendar from '@/components/AppointmentCalendar';
+import CenterTabs from '@/components/CenterTabs';
 
 const Appointments = () => {
   return (
@@ -12,45 +13,74 @@ const Appointments = () => {
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="taa" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="taa" className="bg-blue-600 text-white data-[state=active]:bg-blue-700">
-              ทต.ต้า
+        <Tabs defaultValue="physio" className="w-full">
+          <TabsList className="grid w-full grid-cols-6 mb-8">
+            <TabsTrigger value="physio" className="bg-blue-600 text-white data-[state=active]:bg-blue-700">
+              กายภาพ
             </TabsTrigger>
-            <TabsTrigger value="phranet">
-              รพสต.พระเนตร
+            <TabsTrigger value="chinese">
+              แผนจีน
             </TabsTrigger>
-            <TabsTrigger value="patal">
-              ทต.ป่าตาล
+            <TabsTrigger value="thai">
+              แผนไทย
             </TabsTrigger>
-            <TabsTrigger value="summary">
-              สรุป
+            <TabsTrigger value="joint">
+              เคสร่วม
+            </TabsTrigger>
+            <TabsTrigger value="overtime">
+              นอกเวลา
+            </TabsTrigger>
+            <TabsTrigger value="centers">
+              ศูนย์บริการ
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="taa" className="space-y-6">
+          <TabsContent value="physio" className="space-y-6">
             <AppointmentForm />
             <AppointmentTabs />
             <AppointmentCalendar />
           </TabsContent>
 
-          <TabsContent value="phranet" className="space-y-6">
+          <TabsContent value="chinese" className="space-y-6">
             <AppointmentForm />
-            <AppointmentTabs />
-            <AppointmentCalendar />
-          </TabsContent>
-
-          <TabsContent value="patal" className="space-y-6">
-            <AppointmentForm />
-            <AppointmentTabs />
-            <AppointmentCalendar />
-          </TabsContent>
-
-          <TabsContent value="summary" className="space-y-6">
             <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">สรุปนัดหมายทั้งหมด</h3>
-              <p className="text-gray-500">แสดงข้อมูลรวมจากทุกศูนย์บริการ</p>
+              <h3 className="text-lg font-semibold mb-2">นัดหมายแผนจีน</h3>
+              <p className="text-gray-500">แสดงข้อมูลนัดหมายแผนจีน</p>
             </div>
+            <AppointmentCalendar />
+          </TabsContent>
+
+          <TabsContent value="thai" className="space-y-6">
+            <AppointmentForm />
+            <div className="text-center py-12">
+              <h3 className="text-lg font-semibold mb-2">นัดหมายแผนไทย</h3>
+              <p className="text-gray-500">แสดงข้อมูลนัดหมายแผนไทย</p>
+            </div>
+            <AppointmentCalendar />
+          </TabsContent>
+
+          <TabsContent value="joint" className="space-y-6">
+            <AppointmentForm />
+            <div className="text-center py-12">
+              <h3 className="text-lg font-semibold mb-2">เคสร่วม</h3>
+              <p className="text-gray-500">แสดงข้อมูลเคสร่วมระหว่างแผนก</p>
+            </div>
+            <AppointmentCalendar />
+          </TabsContent>
+
+          <TabsContent value="overtime" className="space-y-6">
+            <AppointmentForm />
+            <div className="text-center py-12">
+              <h3 className="text-lg font-semibold mb-2">นัดหมายนอกเวลา</h3>
+              <p className="text-gray-500">แสดงข้อมูลนัดหมายนอกเวลาราชการ</p>
+            </div>
+            <AppointmentCalendar />
+          </TabsContent>
+
+          <TabsContent value="centers" className="space-y-6">
+            <AppointmentForm />
+            <CenterTabs />
+            <AppointmentCalendar />
           </TabsContent>
         </Tabs>
       </div>
