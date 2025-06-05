@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowRight, Clock, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Check, ArrowRight, Clock, Calendar, Edit, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -123,11 +124,14 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
         all: [
           {
             id: '7',
-            name: 'สมหวัง ใจดี',
-            time: 'วันนี้ 15:00',
+            name: 'นางมีดา อารีย์',
+            date: '5/6/2568',
+            time: '14:00 น.',
+            type: 'นวดโรคขยาบขน',
+            status: 'แผนไทย',
+            location: 'ภาคารคิด',
             hn: 'HN 100400',
-            location: 'เคสร่วม',
-            status: 'confirmed'
+            table: 'โต๊ะ: 1'
           }
         ]
       },
@@ -202,103 +206,69 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
     return '';
   };
 
-  const renderAppointmentCard = (appointment, index) => (
-    <Card key={index} className={cn("mb-4 border-l-4 transition-all duration-200", getCardStyle(appointment.id))}>
+  const renderJointCaseCard = (appointment, index) => (
+    <Card key={index} className={cn("mb-4 border transition-all duration-200", getCardStyle(appointment.id))}>
       <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-1">{appointment.name}</h3>
-        <p className="text-gray-600 mb-1">{appointment.time}</p>
-        <p className="text-gray-500 text-sm mb-3">{appointment.hn} / {appointment.location}</p>
-        
+        {/* Header with badges */}
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-semibold text-lg">{appointment.name}</h3>
+          <div className="flex gap-2">
+            <Badge variant="secondary" className="bg-pink-100 text-pink-800">แผนไทย</Badge>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800">แผนจีน</Badge>
+            <Badge variant="secondary" className="bg-green-100 text-green-800">พรีเปียม</Badge>
+            <Badge variant="outline">{appointment.table}</Badge>
+          </div>
+        </div>
+
+        {/* Patient details */}
+        <div className="text-sm text-gray-600 mb-4">
+          <p>วันที่: {appointment.date} | เวลา: {appointment.time} | ประเภท: {appointment.type} | สถานะ: {appointment.status}</p>
+        </div>
+
+        {/* Action buttons */}
         <div className="flex gap-2 flex-wrap">
           <Button 
             size="sm" 
-            className={getButtonStyle(appointment.id, 'attend')}
+            className="bg-green-600 hover:bg-green-700 text-white"
             onClick={() => handleStatusChange(appointment.id, 'attended')}
           >
             <Check className="w-4 h-4 mr-1" />
             มาตามนัด
           </Button>
           
-          <Popover open={showReschedule === appointment.id} onOpenChange={(open) => setShowReschedule(open ? appointment.id : null)}>
-            <PopoverTrigger asChild>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className={getButtonStyle(appointment.id, 'reschedule')}
-              >
-                <ArrowRight className="w-4 h-4 mr-1" />
-                เลื่อน
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-4">
-              <div className="space-y-4">
-                <h4 className="font-medium">เลื่อนนัดหมาย</h4>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">วันที่ใหม่</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !rescheduleDate && "text-muted-foreground"
-                        )}
-                      >
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {rescheduleDate ? format(rescheduleDate, "dd/MM/yyyy") : "เลือกวันที่"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CalendarComponent
-                        mode="single"
-                        selected={rescheduleDate}
-                        onSelect={setRescheduleDate}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">เวลาใหม่</label>
-                  <Input
-                    type="time"
-                    value={rescheduleTime}
-                    onChange={(e) => setRescheduleTime(e.target.value)}
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleReschedule(appointment.id)}
-                    disabled={!rescheduleDate || !rescheduleTime}
-                    className="bg-yellow-600 hover:bg-yellow-700"
-                  >
-                    ยืนยันการเลื่อน
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => setShowReschedule(null)}
-                  >
-                    ยกเลิก
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <Button 
+            size="sm" 
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+            onClick={() => setShowReschedule(appointment.id)}
+          >
+            <Clock className="w-4 h-4 mr-1" />
+            เลื่อนนัด
+          </Button>
           
           <Button 
             size="sm" 
-            variant="outline" 
-            className={getButtonStyle(appointment.id, 'cancel')}
+            className="bg-red-500 hover:bg-red-600 text-white"
+            onClick={() => handleStatusChange(appointment.id, 'missed')}
+          >
+            <X className="w-4 h-4 mr-1" />
+            ผิดนัด
+          </Button>
+          
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="border-gray-400 text-gray-600 hover:bg-gray-50"
             onClick={() => handleStatusChange(appointment.id, 'cancelled')}
           >
-            <Clock className="w-4 h-4 mr-1" />
             ยกเลิก
+          </Button>
+          
+          <Button 
+            size="sm" 
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            แก้ไข
           </Button>
         </div>
         
@@ -314,11 +284,139 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
             {appointmentStatuses[appointment.id] === 'cancelled' && (
               <span className="text-red-600 font-medium">❌ ยกเลิกแล้ว</span>
             )}
+            {appointmentStatuses[appointment.id] === 'missed' && (
+              <span className="text-red-600 font-medium">❌ ผิดนัด</span>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
   );
+
+  const renderAppointmentCard = (appointment, index) => {
+    // Use special card for joint cases
+    if (department === 'เคสร่วม') {
+      return renderJointCaseCard(appointment, index);
+    }
+
+    return (
+      <Card key={index} className={cn("mb-4 border-l-4 transition-all duration-200", getCardStyle(appointment.id))}>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-1">{appointment.name}</h3>
+          <p className="text-gray-600 mb-1">{appointment.time}</p>
+          <p className="text-gray-500 text-sm mb-3">{appointment.hn} / {appointment.location}</p>
+          
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              size="sm" 
+              className={getButtonStyle(appointment.id, 'attend')}
+              onClick={() => handleStatusChange(appointment.id, 'attended')}
+            >
+              <Check className="w-4 h-4 mr-1" />
+              มาตามนัด
+            </Button>
+            
+            <Popover open={showReschedule === appointment.id} onOpenChange={(open) => setShowReschedule(open ? appointment.id : null)}>
+              <PopoverTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className={getButtonStyle(appointment.id, 'reschedule')}
+                >
+                  <ArrowRight className="w-4 h-4 mr-1" />
+                  เลื่อน
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4">
+                <div className="space-y-4">
+                  <h4 className="font-medium">เลื่อนนัดหมาย</h4>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">วันที่ใหม่</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !rescheduleDate && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {rescheduleDate ? format(rescheduleDate, "dd/MM/yyyy") : "เลือกวันที่"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={rescheduleDate}
+                          onSelect={setRescheduleDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">เวลาใหม่</label>
+                    <Input
+                      type="time"
+                      value={rescheduleTime}
+                      onChange={(e) => setRescheduleTime(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleReschedule(appointment.id)}
+                      disabled={!rescheduleDate || !rescheduleTime}
+                      className="bg-yellow-600 hover:bg-yellow-700"
+                    >
+                      ยืนยันการเลื่อน
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setShowReschedule(null)}
+                    >
+                      ยกเลิก
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className={getButtonStyle(appointment.id, 'cancel')}
+              onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+            >
+              <Clock className="w-4 h-4 mr-1" />
+              ยกเลิก
+            </Button>
+          </div>
+          
+          {/* Status indicator */}
+          {appointmentStatuses[appointment.id] && (
+            <div className="mt-3 text-sm">
+              {appointmentStatuses[appointment.id] === 'attended' && (
+                <span className="text-green-600 font-medium">✅ มาตามนัดแล้ว</span>
+              )}
+              {appointmentStatuses[appointment.id] === 'rescheduled' && (
+                <span className="text-yellow-600 font-medium">📅 เลื่อนนัดแล้ว</span>
+              )}
+              {appointmentStatuses[appointment.id] === 'cancelled' && (
+                <span className="text-red-600 font-medium">❌ ยกเลิกแล้ว</span>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Get table labels based on department
   const getTableLabels = () => {
