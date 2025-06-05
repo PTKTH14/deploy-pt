@@ -224,6 +224,44 @@ export type Database = {
         }
         Relationships: []
       }
+      pt_status: {
+        Row: {
+          date: string | null
+          id: string
+          is_leave: boolean | null
+          leave_dates: Json | null
+          pt_type: string | null
+          table_number: number | null
+          user_id: string | null
+        }
+        Insert: {
+          date?: string | null
+          id?: string
+          is_leave?: boolean | null
+          leave_dates?: Json | null
+          pt_type?: string | null
+          table_number?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          date?: string | null
+          id?: string
+          is_leave?: boolean | null
+          leave_dates?: Json | null
+          pt_type?: string | null
+          table_number?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pt_status_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_holidays: {
         Row: {
           date: string
