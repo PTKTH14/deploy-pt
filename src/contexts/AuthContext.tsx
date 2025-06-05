@@ -54,10 +54,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async (email: string) => {
     try {
+      // Extract username from email (remove @system.local suffix)
+      const username = email.replace('@system.local', '');
+      
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('username', email)
+        .eq('username', username)
         .single();
       
       if (error) {

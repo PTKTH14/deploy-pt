@@ -11,7 +11,7 @@ import PTStatusModal from '@/components/PTStatusModal';
 import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPTModal, setShowPTModal] = useState(false);
@@ -51,32 +51,48 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        toast({
-          title: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if user exists in users table
+      // First check if user exists in users table
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('username', email)
+        .eq('username', username)
         .single();
 
       if (userError || !userData) {
-        await supabase.auth.signOut();
         toast({
           title: "ไม่มีสิทธิ์เข้าระบบ",
           description: "ไม่พบข้อมูลผู้ใช้ในระบบ",
           variant: "destructive",
         });
+        setLoading(false);
         return;
+      }
+
+      // Check if password matches
+      if (userData.password !== password) {
+        toast({
+          title: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ",
+          description: "รหัสผ่านไม่ถูกต้อง",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Create a session by signing in with the username as email
+      const { error } = await signIn(username + '@system.local', 'dummy-password');
+      
+      if (error) {
+        // If auth fails, try to create the user first
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: username + '@system.local',
+          password: 'dummy-password',
+        });
+
+        if (!signUpError) {
+          // Try signing in again
+          await signIn(username + '@system.local', 'dummy-password');
+        }
       }
 
     } catch (error) {
@@ -104,7 +120,7 @@ const Login = () => {
           onStatusSaved={handlePTStatusSaved}
           userId={userProfile.id}
         />
-        {!showPTModal && <div>กำลังเข้าสู่ระบบ...</div>}
+        {!showPTModal && <div className="min-h-screen flex items-center justify-center">กำลังเข้าสู่ระบบ...</div>}
       </>
     );
   }
@@ -118,12 +134,12 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">อีเมล</Label>
+              <Label htmlFor="username">ชื่อผู้ใช้</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>

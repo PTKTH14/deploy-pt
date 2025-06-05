@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -49,28 +48,67 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
       return;
     }
 
+    if (isLeave && leaveDates.length === 0) {
+      toast({
+        title: "กรุณาเลือกวันที่ลา",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      const { error } = await supabase
+      // Check if record already exists for today
+      const { data: existingData } = await supabase
         .from('pt_status')
-        .insert({
-          user_id: userId,
-          date: today,
-          table_number: parseInt(tableNumber),
-          pt_type: ptType,
-          is_leave: isLeave,
-          leave_dates: isLeave ? leaveDates.map(date => date.toISOString().split('T')[0]) : null
-        });
+        .select('id')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .single();
 
-      if (error) {
-        console.error('Error saving PT status:', error);
-        toast({
-          title: "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
-          variant: "destructive",
-        });
-        return;
+      if (existingData) {
+        // Update existing record
+        const { error } = await supabase
+          .from('pt_status')
+          .update({
+            table_number: parseInt(tableNumber),
+            pt_type: ptType,
+            is_leave: isLeave,
+            leave_dates: isLeave ? leaveDates.map(date => date.toISOString().split('T')[0]) : null
+          })
+          .eq('id', existingData.id);
+
+        if (error) {
+          console.error('Error updating PT status:', error);
+          toast({
+            title: "เกิดข้อผิดพลาดในการอัพเดตข้อมูล",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('pt_status')
+          .insert({
+            user_id: userId,
+            date: today,
+            table_number: parseInt(tableNumber),
+            pt_type: ptType,
+            is_leave: isLeave,
+            leave_dates: isLeave ? leaveDates.map(date => date.toISOString().split('T')[0]) : null
+          });
+
+        if (error) {
+          console.error('Error saving PT status:', error);
+          toast({
+            title: "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       toast({
@@ -150,6 +188,7 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
                     onSelect={handleDateSelect}
                     locale={th}
                     initialFocus
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
