@@ -3,24 +3,44 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const AppointmentCalendar = () => {
+interface AppointmentCalendarProps {
+  department?: string;
+}
+
+const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date(2025, 5)); // June 2025
   
-  // Mock data for appointment counts per day - this could be passed as props later
-  const appointmentCounts = {
-    1: 0, 2: 0, 3: 0, 4: 0, 5: 6, 6: 0, 7: 9,
-    8: 12, 9: 3, 10: 11, 11: 6, 12: 0, 13: 0, 14: 0,
-    15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0,
-    22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0,
-    29: 0, 30: 0
+  // Mock data for appointment counts per day based on department
+  const getDepartmentData = (dept: string) => {
+    const baseData = {
+      1: 0, 2: 0, 3: 0, 4: 0, 5: 6, 6: 0, 7: 9,
+      8: 12, 9: 3, 10: 11, 11: 6, 12: 0, 13: 0, 14: 0,
+      15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0,
+      22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0,
+      29: 0, 30: 0
+    };
+
+    if (dept === "แผนจีน") {
+      return { ...baseData, 5: 4, 7: 6, 8: 8, 9: 2, 10: 7, 11: 3 };
+    } else if (dept === "แผนไทย") {
+      return { ...baseData, 5: 3, 7: 5, 8: 9, 9: 1, 10: 6, 11: 4 };
+    } else if (dept === "เคสร่วม") {
+      return { ...baseData, 5: 2, 7: 3, 8: 5, 9: 1, 10: 4, 11: 2 };
+    } else if (dept === "นอกเวลา") {
+      return { ...baseData, 5: 1, 7: 2, 8: 3, 9: 0, 10: 2, 11: 1 };
+    }
+    
+    return baseData;
   };
+
+  const appointmentCounts = getDepartmentData(department);
 
   const months = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
   ];
 
-  const navigateMonth = (direction) => {
+  const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prevDate => {
       const newDate = new Date(prevDate);
       if (direction === 'prev') {
@@ -32,16 +52,16 @@ const AppointmentCalendar = () => {
     });
   };
 
-  const getDaysInMonth = (date) => {
+  const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
 
-  const getFirstDayOfMonth = (date) => {
+  const getFirstDayOfMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
-  const getDayStyle = (day) => {
-    const count = appointmentCounts[day] || 0;
+  const getDayStyle = (day: number) => {
+    const count = appointmentCounts[day as keyof typeof appointmentCounts] || 0;
     
     if (count === 0) {
       return 'bg-gray-50 text-gray-400';
@@ -54,20 +74,21 @@ const AppointmentCalendar = () => {
     }
   };
 
-  const renderCalendarDay = (day, isCurrentMonth = true) => {
+  const renderCalendarDay = (day: number, isCurrentMonth: boolean = true, index: number) => {
     if (!isCurrentMonth) {
       return (
-        <div className="h-16 p-1 text-gray-300 text-sm">
+        <div key={`prev-next-${index}`} className="h-16 p-1 text-gray-300 text-sm">
           {day}
         </div>
       );
     }
 
-    const count = appointmentCounts[day] || 0;
+    const count = appointmentCounts[day as keyof typeof appointmentCounts] || 0;
     const isSelected = day === 5; // Highlight day 5 as selected
 
     return (
       <div 
+        key={`current-${day}`}
         className={`h-16 p-1 text-sm cursor-pointer transition-all duration-200 relative
           ${getDayStyle(day)} 
           ${isSelected ? 'ring-2 ring-blue-400 rounded-md' : ''}
@@ -87,25 +108,26 @@ const AppointmentCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
+    let dayIndex = 0;
     
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 0);
       const prevMonthDays = prevMonth.getDate();
       const dayNumber = prevMonthDays - firstDay + i + 1;
-      days.push(renderCalendarDay(dayNumber, false));
+      days.push(renderCalendarDay(dayNumber, false, dayIndex++));
     }
     
     // Add days of the current month
     for (let day = 1; day <= daysInMonth; day++) {
-      days.push(renderCalendarDay(day, true));
+      days.push(renderCalendarDay(day, true, dayIndex++));
     }
     
     // Fill remaining cells with next month's days
     const totalCells = 42; // 6 rows × 7 days
     const remainingCells = totalCells - days.length;
     for (let day = 1; day <= remainingCells; day++) {
-      days.push(renderCalendarDay(day, false));
+      days.push(renderCalendarDay(day, false, dayIndex++));
     }
     
     return days;

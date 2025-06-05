@@ -52,32 +52,31 @@ const Appointments = () => {
 
           <TabsContent value="physio" className="space-y-6">
             <AppointmentTabs department="กายภาพ" />
-            <AppointmentCalendar />
+            <AppointmentCalendar department="กายภาพ" />
           </TabsContent>
 
           <TabsContent value="chinese" className="space-y-6">
             <AppointmentTabs department="แผนจีน" />
-            <AppointmentCalendar />
+            <AppointmentCalendar department="แผนจีน" />
           </TabsContent>
 
           <TabsContent value="thai" className="space-y-6">
             <AppointmentTabs department="แผนไทย" />
-            <AppointmentCalendar />
+            <AppointmentCalendar department="แผนไทย" />
           </TabsContent>
 
           <TabsContent value="joint" className="space-y-6">
             <AppointmentTabs department="เคสร่วม" />
-            <AppointmentCalendar />
+            <AppointmentCalendar department="เคสร่วม" />
           </TabsContent>
 
           <TabsContent value="overtime" className="space-y-6">
             <AppointmentTabs department="นอกเวลา" />
-            <AppointmentCalendar />
+            <AppointmentCalendar department="นอกเวลา" />
           </TabsContent>
 
           <TabsContent value="centers" className="space-y-6">
             <CenterTabs />
-            <AppointmentCalendar />
           </TabsContent>
         </Tabs>
       </div>
