@@ -51,50 +51,15 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // First check if user exists in users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', username)
-        .single();
-
-      if (userError || !userData) {
-        toast({
-          title: "ไม่มีสิทธิ์เข้าระบบ",
-          description: "ไม่พบข้อมูลผู้ใช้ในระบบ",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Check if password matches
-      if (userData.password !== password) {
-        toast({
-          title: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ",
-          description: "รหัสผ่านไม่ถูกต้อง",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Create a session by signing in with the username as email
-      const { error } = await signIn(username + '@system.local', 'dummy-password');
+      const { error } = await signIn(username, password);
       
       if (error) {
-        // If auth fails, try to create the user first
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: username + '@system.local',
-          password: 'dummy-password',
+        toast({
+          title: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ",
+          description: error.message || "กรุณาลองใหม่อีกครั้ง",
+          variant: "destructive",
         });
-
-        if (!signUpError) {
-          // Try signing in again
-          await signIn(username + '@system.local', 'dummy-password');
-        }
       }
-
     } catch (error) {
       console.error('Login error:', error);
       toast({

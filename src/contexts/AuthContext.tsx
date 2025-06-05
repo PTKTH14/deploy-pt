@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   userProfile: any | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (username: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -75,12 +75,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+  const signIn = async (username: string, password: string) => {
+    try {
+      // First check if user exists in users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+      if (userError || !userData) {
+        return { error: { message: "ไม่พบข้อมูลผู้ใช้ในระบบ" } };
+      }
+
+      // Check if password matches
+      if (userData.password !== password) {
+        return { error: { message: "รหัสผ่านไม่ถูกต้อง" } };
+      }
+
+      // Create a session by signing in with the username as email
+      const { error } = await supabase.auth.signInWithPassword({
+        email: username + '@system.local',
+        password: 'dummy-password',
+      });
+      
+      if (error) {
+        // If auth fails, try to create the user first
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: username + '@system.local',
+          password: 'dummy-password',
+        });
+
+        if (!signUpError) {
+          // Try signing in again
+          const { error: retryError } = await supabase.auth.signInWithPassword({
+            email: username + '@system.local',
+            password: 'dummy-password',
+          });
+          return { error: retryError };
+        }
+        return { error: signUpError };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { error: { message: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" } };
+    }
   };
 
   const signOut = async () => {
