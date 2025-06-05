@@ -21,7 +21,7 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
   const [showReschedule, setShowReschedule] = useState(null);
 
   // Check if department should show table tabs
-  const shouldShowTables = department === 'กายภาพ';
+  const shouldShowTables = department === 'กายภาพ' || department === 'แผนจีน';
 
   // Mock data based on department
   const getAppointmentData = () => {
@@ -60,6 +60,34 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
         ]
       },
       แผนจีน: {
+        table1: [
+          {
+            id: '4',
+            name: 'สมปอง ใจงาม',
+            time: 'วันนี้ 09:00',
+            hn: 'HN 100200',
+            location: 'คลินิกแผนจีน โต๊ะ 1',
+            status: 'confirmed'
+          },
+          {
+            id: '9',
+            name: 'สมศักดิ์ แสงใส',
+            time: 'วันนี้ 10:30',
+            hn: 'HN 100210',
+            location: 'คลินิกแผนจีน โต๊ะ 1',
+            status: 'pending'
+          }
+        ],
+        table2: [
+          {
+            id: '5',
+            name: 'วิไลวรรณ สุขสม',
+            time: 'วันนี้ 11:00',
+            hn: 'HN 100201',
+            location: 'คลินิกแผนจีน โต๊ะ 2',
+            status: 'pending'
+          }
+        ],
         all: [
           {
             id: '4',
@@ -292,19 +320,29 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
     </Card>
   );
 
-  const tableLabels = ['โต๊ะ 1', 'โต๊ะ 2', 'โต๊ะ 3', 'เคสรวม'];
+  // Get table labels based on department
+  const getTableLabels = () => {
+    if (department === 'กายภาพ') {
+      return ['โต๊ะ 1', 'โต๊ะ 2', 'โต๊ะ 3', 'เคสรวม'];
+    } else if (department === 'แผนจีน') {
+      return ['โต๊ะ 1', 'โต๊ะ 2'];
+    }
+    return [];
+  };
+
+  const tableLabels = getTableLabels();
 
   return (
     <div className="space-y-4">
-      {/* Table Tabs - Only show for กายภาพ */}
+      {/* Table Tabs - Show for กายภาพ and แผนจีน */}
       {shouldShowTables && (
         <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
           {tableLabels.map((label, index) => (
             <button
               key={index}
-              onClick={() => setActiveTable(index === 3 ? 'summary' : `table${index + 1}`)}
+              onClick={() => setActiveTable(department === 'กายภาพ' && index === 3 ? 'summary' : `table${index + 1}`)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTable === (index === 3 ? 'summary' : `table${index + 1}`)
+                activeTable === (department === 'กายภาพ' && index === 3 ? 'summary' : `table${index + 1}`)
                   ? 'bg-white text-blue-600 shadow-sm border-b-2 border-blue-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
@@ -319,7 +357,7 @@ const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsP
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           {shouldShowTables ? (
-            // Show table-based appointments for กายภาพ
+            // Show table-based appointments for กายภาพ and แผนจีน
             appointmentData[activeTable as keyof typeof appointmentData]?.length > 0 ? (
               appointmentData[activeTable as keyof typeof appointmentData].map((appointment, index) =>
                 renderAppointmentCard(appointment, index)

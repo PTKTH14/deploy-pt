@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
+import DashboardChart from '@/components/DashboardChart';
 
 const Dashboard = () => {
   const stats = [
@@ -58,6 +59,13 @@ const Dashboard = () => {
     { time: '10:30', patient: 'สุดา แสงใส', type: 'กายภาพ', table: 'โต๊ะ 1', status: 'waiting' }
   ];
 
+  // PT Table data for PT users
+  const ptTableStats = [
+    { table: 'โต๊ะ 1', patients: 8, status: 'normal' },
+    { table: 'โต๊ะ 2', patients: 12, status: 'full' },
+    { table: 'โต๊ะ 3', patients: 6, status: 'normal' },
+  ];
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'waiting': return 'bg-yellow-100 text-yellow-800';
@@ -76,6 +84,9 @@ const Dashboard = () => {
     }
   };
 
+  // Simulate PT user check (in real app, this would come from auth context)
+  const isPTUser = true; // For demo purposes
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -83,7 +94,7 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">แดshboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">แดashboard</h1>
           <p className="text-gray-600">ภาพรวมระบบจัดการนัดหมายผู้ป่วย CareSync+</p>
         </div>
 
@@ -114,6 +125,12 @@ const Dashboard = () => {
               </Card>
             );
           })}
+        </div>
+
+        {/* Charts Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">สถิติและกราฟ</h2>
+          <DashboardChart />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -194,7 +211,7 @@ const Dashboard = () => {
         </div>
 
         {/* Additional Info */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
               <CardTitle>สถิติแผนก</CardTitle>
@@ -216,6 +233,33 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* PT Table Status - Only visible for PT users */}
+          {isPTUser && (
+            <Card>
+              <CardHeader>
+                <CardTitle>สถานะโต๊ะ PT</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {ptTableStats.map((table, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${
+                          table.status === 'full' ? 'bg-red-500' : 'bg-green-500'
+                        }`}></div>
+                        <span className="font-medium">{table.table}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-semibold">{table.patients}/12</span>
+                        <p className="text-xs text-gray-500">ผู้ป่วย</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
