@@ -228,7 +228,7 @@ const CommandModal = ({ open, onOpenChange }: CommandModalProps) => {
             <div className="flex gap-3 pt-4">
               <Button 
                 onClick={handleConfirm}
-                disabled={!outputJson || outputJson.error}
+                disabled={!outputJson || !!outputJson.error}
                 className="flex-1"
               >
                 ยืนยัน

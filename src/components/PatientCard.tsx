@@ -23,6 +23,7 @@ interface PatientCardProps {
   onSchedule: (patient: Patient) => void;
   onHomeVisit: (patient: Patient) => void;
   onDispenseEquipment: (patient: Patient, equipment: any[]) => void;
+  onSelectForAppointment: (patient: Patient) => void;
 }
 
 const PatientCard = ({ 
@@ -30,7 +31,8 @@ const PatientCard = ({
   onSendToPT, 
   onSchedule, 
   onHomeVisit, 
-  onDispenseEquipment 
+  onDispenseEquipment,
+  onSelectForAppointment 
 }: PatientCardProps) => {
   const [showPTDialog, setShowPTDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
@@ -59,7 +61,13 @@ const PatientCard = ({
           <div className="flex justify-between items-start">
             <CardTitle className="flex items-center text-lg">
               <User className="w-5 h-5 mr-2 text-blue-600" />
-              {patient.full_name}
+              <Button
+                variant="ghost"
+                className="p-0 h-auto font-bold text-lg text-blue-600 hover:text-blue-800 hover:bg-transparent"
+                onClick={() => onSelectForAppointment(patient)}
+              >
+                {patient.full_name}
+              </Button>
             </CardTitle>
             <Badge className={getRightTypeColor(patient.right_type)}>
               {patient.right_type}

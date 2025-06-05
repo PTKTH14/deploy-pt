@@ -1,15 +1,18 @@
+
 import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PatientCard from '@/components/PatientCard';
+import AddPatientDialog from '@/components/AddPatientDialog';
+import AppointmentFormDialog from '@/components/AppointmentFormDialog';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 // Mock data for demonstration
-const mockPatients = [
+const initialMockPatients = [
   {
     id: '1',
     full_name: 'สมชาย ใจดี',
@@ -41,16 +44,20 @@ const mockPatients = [
 
 const Patients = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredPatients, setFilteredPatients] = useState(mockPatients);
+  const [patients, setPatients] = useState(initialMockPatients);
+  const [filteredPatients, setFilteredPatients] = useState(initialMockPatients);
+  const [showAddPatientDialog, setShowAddPatientDialog] = useState(false);
+  const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.trim() === '') {
-      setFilteredPatients(mockPatients);
+      setFilteredPatients(patients);
     } else {
-      const filtered = mockPatients.filter(patient =>
+      const filtered = patients.filter(patient =>
         patient.full_name.toLowerCase().includes(query.toLowerCase()) ||
         patient.cid.includes(query) ||
         patient.hn.toLowerCase().includes(query.toLowerCase())
@@ -90,6 +97,17 @@ const Patients = () => {
     });
   };
 
+  const handleSelectForAppointment = (patient: any) => {
+    setSelectedPatient(patient);
+    setShowAppointmentDialog(true);
+  };
+
+  const handlePatientAdded = (newPatient: any) => {
+    const updatedPatients = [...patients, newPatient];
+    setPatients(updatedPatients);
+    setFilteredPatients(updatedPatients);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -98,7 +116,10 @@ const Patients = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">ผู้มาใช้บริการ</h1>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => setShowAddPatientDialog(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               เพิ่มผู้ป่วยใหม่
             </Button>
@@ -140,6 +161,7 @@ const Patients = () => {
               onSchedule={handleSchedule}
               onHomeVisit={handleHomeVisit}
               onDispenseEquipment={handleDispenseEquipment}
+              onSelectForAppointment={handleSelectForAppointment}
             />
           ))}
         </div>
@@ -156,6 +178,20 @@ const Patients = () => {
           </Card>
         )}
       </div>
+
+      {/* Add Patient Dialog */}
+      <AddPatientDialog
+        open={showAddPatientDialog}
+        onOpenChange={setShowAddPatientDialog}
+        onPatientAdded={handlePatientAdded}
+      />
+
+      {/* Appointment Form Dialog */}
+      <AppointmentFormDialog
+        open={showAppointmentDialog}
+        onOpenChange={setShowAppointmentDialog}
+        selectedPatient={selectedPatient}
+      />
     </div>
   );
 };
