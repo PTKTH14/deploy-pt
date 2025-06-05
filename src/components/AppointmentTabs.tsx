@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,46 +8,98 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-const AppointmentTabs = () => {
+interface AppointmentTabsProps {
+  department?: string;
+}
+
+const AppointmentTabs = ({ department = 'กายภาพ' }: AppointmentTabsProps) => {
   const [activeTable, setActiveTable] = useState('table1');
   const [appointmentStatuses, setAppointmentStatuses] = useState({});
   const [rescheduleDate, setRescheduleDate] = useState(null);
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [showReschedule, setShowReschedule] = useState(null);
 
-  const appointmentData = {
-    table1: [
-      {
-        id: '1',
-        name: 'นงนุช คงอาศรี',
-        time: 'วันนี้ 10:00',
-        hn: 'HN 100094',
-        location: 'รพ.สต.ภความิด',
-        status: 'confirmed'
+  // Mock data based on department
+  const getAppointmentData = () => {
+    const baseData = {
+      กายภาพ: {
+        table1: [
+          {
+            id: '1',
+            name: 'นงนุช คงอาศรี',
+            time: 'วันนี้ 10:00',
+            hn: 'HN 100094',
+            location: 'รพ.สต.ภความิด',
+            status: 'confirmed'
+          }
+        ],
+        table2: [],
+        table3: [
+          {
+            id: '2',
+            name: 'วิทวส นาคร่',
+            time: 'วันนี้ 10:00',
+            hn: 'HN 100599',
+            location: 'รพ.สาพบามิด',
+            status: 'pending'
+          }
+        ],
+        summary: [
+          {
+            id: '3',
+            name: 'สมชาย ใจดี',
+            time: 'วันนี้ 14:00',
+            hn: 'HN 100123',
+            location: 'เคสรวม',
+            status: 'confirmed'
+          }
+        ]
+      },
+      แผนจีน: {
+        table1: [
+          {
+            id: '4',
+            name: 'สมปอง ใจงาม',
+            time: 'วันนี้ 09:00',
+            hn: 'HN 100200',
+            location: 'คลินิกแผนจีน',
+            status: 'confirmed'
+          }
+        ],
+        table2: [
+          {
+            id: '5',
+            name: 'วิไลวรรณ สุขสม',
+            time: 'วันนี้ 11:00',
+            hn: 'HN 100201',
+            location: 'คลินิกแผนจีน',
+            status: 'pending'
+          }
+        ],
+        table3: [],
+        summary: []
+      },
+      แผนไทย: {
+        table1: [
+          {
+            id: '6',
+            name: 'ประสบ ดีใจ',
+            time: 'วันนี้ 13:00',
+            hn: 'HN 100300',
+            location: 'คลินิกแผนไทย',
+            status: 'confirmed'
+          }
+        ],
+        table2: [],
+        table3: [],
+        summary: []
       }
-    ],
-    table2: [],
-    table3: [
-      {
-        id: '2',
-        name: 'วิทวส นาคร่',
-        time: 'วันนี้ 10:00',
-        hn: 'HN 100599',
-        location: 'รพ.สาพบามิด',
-        status: 'pending'
-      }
-    ],
-    summary: [
-      {
-        id: '3',
-        name: 'สมชาย ใจดี',
-        time: 'วันนี้ 14:00',
-        hn: 'HN 100123',
-        location: 'เคสรวม',
-        status: 'confirmed'
-      }
-    ]
+    };
+    
+    return baseData[department] || baseData.กายภาพ;
   };
+
+  const appointmentData = getAppointmentData();
 
   const handleStatusChange = (appointmentId, status) => {
     setAppointmentStatuses(prev => ({

@@ -51,39 +51,27 @@ const Appointments = () => {
           </TabsList>
 
           <TabsContent value="physio" className="space-y-6">
-            <AppointmentTabs />
+            <AppointmentTabs department="กายภาพ" />
             <AppointmentCalendar />
           </TabsContent>
 
           <TabsContent value="chinese" className="space-y-6">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">นัดหมายแผนจีน</h3>
-              <p className="text-gray-500">แสดงข้อมูลนัดหมายแผนจีน</p>
-            </div>
+            <AppointmentTabs department="แผนจีน" />
             <AppointmentCalendar />
           </TabsContent>
 
           <TabsContent value="thai" className="space-y-6">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">นัดหมายแผนไทย</h3>
-              <p className="text-gray-500">แสดงข้อมูลนัดหมายแผนไทย</p>
-            </div>
+            <AppointmentTabs department="แผนไทย" />
             <AppointmentCalendar />
           </TabsContent>
 
           <TabsContent value="joint" className="space-y-6">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">เคสร่วม</h3>
-              <p className="text-gray-500">แสดงข้อมูลเคสร่วมระหว่างแผนก</p>
-            </div>
+            <AppointmentTabs department="เคสร่วม" />
             <AppointmentCalendar />
           </TabsContent>
 
           <TabsContent value="overtime" className="space-y-6">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2">นัดหมายนอกเวลา</h3>
-              <p className="text-gray-500">แสดงข้อมูลนัดหมายนอกเวลาราชการ</p>
-            </div>
+            <AppointmentTabs department="นอกเวลา" />
             <AppointmentCalendar />
           </TabsContent>
 

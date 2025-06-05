@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const AppointmentCalendar = () => {
-  // Mock data for appointment counts per day
+  const [currentDate, setCurrentDate] = useState(new Date(2025, 5)); // June 2025
+  
+  // Mock data for appointment counts per day - this could be passed as props later
   const appointmentCounts = {
     1: 0, 2: 0, 3: 0, 4: 0, 5: 6, 6: 0, 7: 9,
     8: 12, 9: 3, 10: 11, 11: 6, 12: 0, 13: 0, 14: 0,
@@ -13,7 +15,32 @@ const AppointmentCalendar = () => {
     29: 0, 30: 0
   };
 
-  const getDayStyle = (day: number) => {
+  const months = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+
+  const navigateMonth = (direction) => {
+    setCurrentDate(prevDate => {
+      const newDate = new Date(prevDate);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const getDayStyle = (day) => {
     const count = appointmentCounts[day] || 0;
     
     if (count === 0) {
@@ -27,7 +54,7 @@ const AppointmentCalendar = () => {
     }
   };
 
-  const renderCalendarDay = (day: number, isCurrentMonth: boolean = true) => {
+  const renderCalendarDay = (day, isCurrentMonth = true) => {
     if (!isCurrentMonth) {
       return (
         <div className="h-16 p-1 text-gray-300 text-sm">
@@ -37,7 +64,7 @@ const AppointmentCalendar = () => {
     }
 
     const count = appointmentCounts[day] || 0;
-    const isSelected = day === 5; // Highlight day 5 as selected (like in the image)
+    const isSelected = day === 5; // Highlight day 5 as selected
 
     return (
       <div 
@@ -56,17 +83,53 @@ const AppointmentCalendar = () => {
     );
   };
 
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+    const days = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 0);
+      const prevMonthDays = prevMonth.getDate();
+      const dayNumber = prevMonthDays - firstDay + i + 1;
+      days.push(renderCalendarDay(dayNumber, false));
+    }
+    
+    // Add days of the current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(renderCalendarDay(day, true));
+    }
+    
+    // Fill remaining cells with next month's days
+    const totalCells = 42; // 6 rows × 7 days
+    const remainingCells = totalCells - days.length;
+    for (let day = 1; day <= remainingCells; day++) {
+      days.push(renderCalendarDay(day, false));
+    }
+    
+    return days;
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <span>ปฏิทินนัดหมาย</span>
           <div className="flex items-center gap-4">
-            <button className="p-1 hover:bg-gray-100 rounded">
+            <button 
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              onClick={() => navigateMonth('prev')}
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-normal">มิถุนายน 2025</span>
-            <button className="p-1 hover:bg-gray-100 rounded">
+            <span className="text-sm font-normal min-w-[120px] text-center">
+              {months[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </span>
+            <button 
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              onClick={() => navigateMonth('next')}
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -99,59 +162,8 @@ const AppointmentCalendar = () => {
           <div className="font-semibold py-2 text-sm text-gray-600">ศ</div>
           <div className="font-semibold py-2 text-sm text-gray-600">ส</div>
           
-          {/* Calendar Days - First Week */}
-          {renderCalendarDay(1)}
-          {renderCalendarDay(2)}
-          {renderCalendarDay(3)}
-          {renderCalendarDay(4)}
-          {renderCalendarDay(5)}
-          {renderCalendarDay(6)}
-          {renderCalendarDay(7)}
-          
-          {/* Second Week */}
-          {renderCalendarDay(8)}
-          {renderCalendarDay(9)}
-          {renderCalendarDay(10)}
-          {renderCalendarDay(11)}
-          {renderCalendarDay(12)}
-          {renderCalendarDay(13)}
-          {renderCalendarDay(14)}
-          
-          {/* Third Week */}
-          {renderCalendarDay(15)}
-          {renderCalendarDay(16)}
-          {renderCalendarDay(17)}
-          {renderCalendarDay(18)}
-          {renderCalendarDay(19)}
-          {renderCalendarDay(20)}
-          {renderCalendarDay(21)}
-          
-          {/* Fourth Week */}
-          {renderCalendarDay(22)}
-          {renderCalendarDay(23)}
-          {renderCalendarDay(24)}
-          {renderCalendarDay(25)}
-          {renderCalendarDay(26)}
-          {renderCalendarDay(27)}
-          {renderCalendarDay(28)}
-          
-          {/* Fifth Week */}
-          {renderCalendarDay(29)}
-          {renderCalendarDay(30)}
-          <div className="h-16 p-1 text-gray-300 text-sm">1</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">2</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">3</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">4</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">5</div>
-          
-          {/* Sixth Week */}
-          <div className="h-16 p-1 text-gray-300 text-sm">6</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">7</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">8</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">9</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">10</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">11</div>
-          <div className="h-16 p-1 text-gray-300 text-sm">12</div>
+          {/* Calendar Days */}
+          {renderCalendar()}
         </div>
       </CardContent>
     </Card>
