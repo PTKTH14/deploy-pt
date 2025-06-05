@@ -40,11 +40,6 @@ const App = () => (
                 <AppointmentManagement />
               </ProtectedRoute>
             } />
-            <Route path="/patients" element={
-              <ProtectedRoute>
-                <Patients />
-              </ProtectedRoute>
-            } />
             <Route path="/appointments" element={
               <ProtectedRoute>
                 <Appointments />

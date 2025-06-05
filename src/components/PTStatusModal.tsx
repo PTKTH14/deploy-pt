@@ -1,11 +1,6 @@
 
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { th } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,26 +25,22 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
   const [ptType, setPtType] = useState<string>('');
   const [isLeave, setIsLeave] = useState(false);
   const [leaveDates, setLeaveDates] = useState<Date[]>([]);
-  const [tempLeaveDate, setTempLeaveDate] = useState<Date>();
+  const [selectedDate, setSelectedDate] = useState<Date>();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleAddLeaveDate = () => {
-    if (tempLeaveDate && !leaveDates.some(date => 
-      format(date, 'yyyy-MM-dd') === format(tempLeaveDate, 'yyyy-MM-dd')
-    )) {
-      setLeaveDates([...leaveDates, tempLeaveDate]);
-      setTempLeaveDate(undefined);
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date && !leaveDates.find(d => d.toDateString() === date.toDateString())) {
+      setLeaveDates([...leaveDates, date]);
     }
+    setSelectedDate(undefined);
   };
 
-  const handleRemoveLeaveDate = (dateToRemove: Date) => {
-    setLeaveDates(leaveDates.filter(date => 
-      format(date, 'yyyy-MM-dd') !== format(dateToRemove, 'yyyy-MM-dd')
-    ));
+  const removeLeavDate = (dateToRemove: Date) => {
+    setLeaveDates(leaveDates.filter(date => date.toDateString() !== dateToRemove.toDateString()));
   };
 
-  const handleSubmit = async () => {
+  const handleSave = async () => {
     if (!tableNumber || !ptType) {
       toast({
         title: "กรุณากรอกข้อมูลให้ครบถ้วน",
@@ -70,11 +61,16 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
           table_number: parseInt(tableNumber),
           pt_type: ptType,
           is_leave: isLeave,
-          leave_dates: isLeave ? leaveDates.map(date => format(date, 'yyyy-MM-dd')) : null
+          leave_dates: isLeave ? leaveDates.map(date => date.toISOString().split('T')[0]) : null
         });
 
       if (error) {
-        throw error;
+        console.error('Error saving PT status:', error);
+        toast({
+          title: "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
+          variant: "destructive",
+        });
+        return;
       }
 
       toast({
@@ -85,7 +81,7 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
     } catch (error) {
       console.error('Error saving PT status:', error);
       toast({
-        title: "เกิดข้อผิดพลาดในการบันทึก",
+        title: "เกิดข้อผิดพลาด",
         variant: "destructive",
       });
     } finally {
@@ -94,15 +90,15 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md" hideCloseButton>
+    <Dialog open={open}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>กรอกข้อมูลก่อนเข้าระบบ</DialogTitle>
+          <DialogTitle>ข้อมูลการทำงานวันนี้</DialogTitle>
         </DialogHeader>
-
+        
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="table">วันนี้อยู่โต๊ะไหน</Label>
+            <Label htmlFor="table">โต๊ะที่ทำงาน</Label>
             <Select value={tableNumber} onValueChange={setTableNumber}>
               <SelectTrigger>
                 <SelectValue placeholder="เลือกโต๊ะ" />
@@ -119,7 +115,7 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
             <Label htmlFor="ptType">ประเภท PT</Label>
             <Select value={ptType} onValueChange={setPtType}>
               <SelectTrigger>
-                <SelectValue placeholder="เลือกประเภท PT" />
+                <SelectValue placeholder="เลือกประเภท" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ศูนย์บริการ">PT ประจำศูนย์บริการ</SelectItem>
@@ -139,52 +135,40 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
 
           {isLeave && (
             <div className="space-y-2">
-              <Label>เลือกวันลา</Label>
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "justify-start text-left font-normal flex-1",
-                        !tempLeaveDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {tempLeaveDate ? format(tempLeaveDate, "dd/MM/yyyy") : "เลือกวันที่"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={tempLeaveDate}
-                      onSelect={setTempLeaveDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  type="button"
-                  onClick={handleAddLeaveDate}
-                  disabled={!tempLeaveDate}
-                >
-                  เพิ่ม
-                </Button>
-              </div>
+              <Label>วันที่ลา</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    เลือกวันที่ลา
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    locale={th}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               
               {leaveDates.length > 0 && (
                 <div className="space-y-1">
-                  <Label className="text-sm text-gray-600">วันลาที่เลือก:</Label>
-                  {leaveDates.map((date) => (
-                    <div key={format(date, 'yyyy-MM-dd')} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                      <span className="text-sm">{format(date, 'dd/MM/yyyy')}</span>
+                  <Label className="text-sm">วันที่ลาที่เลือก:</Label>
+                  {leaveDates.map((date, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                      <span className="text-sm">
+                        {format(date, 'dd/MM/yyyy', { locale: th })}
+                      </span>
                       <Button
-                        type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveLeaveDate(date)}
+                        onClick={() => removeLeavDate(date)}
+                        className="h-6 w-6 p-0"
                       >
-                        ลบ
+                        ×
                       </Button>
                     </div>
                   ))}
@@ -193,12 +177,8 @@ const PTStatusModal = ({ open, onStatusSaved, userId }: PTStatusModalProps) => {
             </div>
           )}
 
-          <Button 
-            onClick={handleSubmit} 
-            className="w-full"
-            disabled={loading || !tableNumber || !ptType}
-          >
-            {loading ? "กำลังบันทึก..." : "บันทึกและเข้าระบบ"}
+          <Button onClick={handleSave} disabled={loading} className="w-full">
+            {loading ? "กำลังบันทึก..." : "บันทึก"}
           </Button>
         </div>
       </DialogContent>
