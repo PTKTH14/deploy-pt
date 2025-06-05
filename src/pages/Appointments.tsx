@@ -1,16 +1,17 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import AppointmentTabs from '@/components/AppointmentTabs';
 import AppointmentCalendar from '@/components/AppointmentCalendar';
 import CenterTabs from '@/components/CenterTabs';
+import CommandModal from '@/components/CommandModal';
 
 const Appointments = () => {
   const navigate = useNavigate();
+  const [showCommandModal, setShowCommandModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -19,13 +20,23 @@ const Appointments = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">จัดการนัดหมาย</h1>
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => navigate('/appointments/new')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            เพิ่มนัดหมายผู้ป่วยใหม่
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              onClick={() => setShowCommandModal(true)}
+              className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              พิมพ์คำสั่ง
+            </Button>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => navigate('/appointments/new')}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              เพิ่มนัดหมายผู้ป่วยใหม่
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="physio" className="w-full">
@@ -80,6 +91,12 @@ const Appointments = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Command Modal */}
+      <CommandModal 
+        open={showCommandModal} 
+        onOpenChange={setShowCommandModal} 
+      />
     </div>
   );
 };
