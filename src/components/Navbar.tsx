@@ -1,71 +1,55 @@
 
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Users, Calendar, MapPin, BarChart3, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, Home, Users, Calendar, FileText, MapPin } from 'lucide-react';
 
 const Navbar = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { signOut, userProfile } = useAuth();
 
-  const navItems = [
-    { path: '/', label: 'หน้าหลัก', icon: Home },
-    { path: '/patient-list', label: 'ผู้รับบริการ', icon: Users },
-    { path: '/appointment-management', label: 'นัดหมาย', icon: Calendar },
-    { path: '/appointments', label: 'จัดการนัดหมาย', icon: Calendar },
-    { path: '/home-visits', label: 'เยี่ยมบ้าน', icon: MapPin },
-    { path: '/reports', label: 'รายงาน', icon: FileText },
+  const navigationItems = [
+    { name: 'แดชบอร์ด', href: '/', icon: Home },
+    { name: 'ผู้มาใช้บริการ', href: '/patients', icon: Users },
+    { name: 'นัดหมาย', href: '/appointments', icon: Calendar },
+    { name: 'เยี่ยมบ้าน', href: '/home-visits', icon: MapPin },
+    { name: 'รายงาน', href: '/reports', icon: BarChart3 },
   ];
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const isActive = (path: string) => location.pathname === path;
-
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-xl font-bold text-blue-600">
-                ระบบนัดหมายผู้ป่วย
-              </h1>
+              <h1 className="text-white text-xl font-bold">CareSync+</h1>
             </div>
-            
-            <div className="hidden md:flex space-x-4">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Button
-                    key={item.path}
-                    variant={isActive(item.path) ? "default" : "ghost"}
-                    onClick={() => navigate(item.path)}
-                    className={isActive(item.path) ? "bg-blue-600 text-white" : ""}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.label}
-                  </Button>
-                );
-              })}
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                        isActive
+                          ? 'bg-blue-700 text-white'
+                          : 'text-blue-100 hover:bg-blue-700 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 mr-2" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
-
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-700">
-              {userProfile?.full_name}
-            </span>
-            <Button
-              variant="ghost"
-              onClick={handleSignOut}
-              className="text-gray-700 hover:text-red-600"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              ออกจากระบบ
+          <div className="flex items-center">
+            <span className="text-white text-sm mr-4">พีรพงษ์ เมืองอินทร์ (PT)</span>
+            <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700">
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
