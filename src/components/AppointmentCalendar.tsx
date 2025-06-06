@@ -2,38 +2,32 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAppointments } from '@/hooks/useAppointments';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 interface AppointmentCalendarProps {
   department?: string;
 }
 
 const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentCalendarProps) => {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 5)); // June 2025
+  const [currentDate, setCurrentDate] = useState(new Date());
   
-  // Mock data for appointment counts per day based on department
-  const getDepartmentData = (dept: string) => {
-    const baseData = {
-      1: 0, 2: 0, 3: 0, 4: 0, 5: 6, 6: 0, 7: 9,
-      8: 12, 9: 3, 10: 11, 11: 6, 12: 0, 13: 0, 14: 0,
-      15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0,
-      22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0,
-      29: 0, 30: 0
-    };
+  // Fetch appointments for the current month
+  const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
+  const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
+  
+  const { data: appointments = [] } = useAppointments({
+    department: department === "กายภาพ" ? "กายภาพบำบัด" : department
+  });
 
-    if (dept === "แผนจีน") {
-      return { ...baseData, 5: 4, 7: 6, 8: 8, 9: 2, 10: 7, 11: 3 };
-    } else if (dept === "แผนไทย") {
-      return { ...baseData, 5: 3, 7: 5, 8: 9, 9: 1, 10: 6, 11: 4 };
-    } else if (dept === "เคสร่วม") {
-      return { ...baseData, 5: 2, 7: 3, 8: 5, 9: 1, 10: 4, 11: 2 };
-    } else if (dept === "นอกเวลา") {
-      return { ...baseData, 5: 1, 7: 2, 8: 3, 9: 0, 10: 2, 11: 1 };
+  // Count appointments per day
+  const appointmentCounts = appointments.reduce((acc, appointment) => {
+    if (appointment.appointment_date) {
+      const day = new Date(appointment.appointment_date).getDate();
+      acc[day] = (acc[day] || 0) + 1;
     }
-    
-    return baseData;
-  };
-
-  const appointmentCounts = getDepartmentData(department);
+    return acc;
+  }, {} as Record<number, number>);
 
   const months = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -61,7 +55,7 @@ const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentC
   };
 
   const getDayStyle = (day: number) => {
-    const count = appointmentCounts[day as keyof typeof appointmentCounts] || 0;
+    const count = appointmentCounts[day] || 0;
     
     if (count === 0) {
       return 'bg-gray-50 text-gray-400';
@@ -83,15 +77,17 @@ const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentC
       );
     }
 
-    const count = appointmentCounts[day as keyof typeof appointmentCounts] || 0;
-    const isSelected = day === 5; // Highlight day 5 as selected
+    const count = appointmentCounts[day] || 0;
+    const isToday = day === new Date().getDate() && 
+                   currentDate.getMonth() === new Date().getMonth() && 
+                   currentDate.getFullYear() === new Date().getFullYear();
 
     return (
       <div 
         key={`current-${day}`}
         className={`h-16 p-1 text-sm cursor-pointer transition-all duration-200 relative
           ${getDayStyle(day)} 
-          ${isSelected ? 'ring-2 ring-blue-400 rounded-md' : ''}
+          ${isToday ? 'ring-2 ring-blue-400 rounded-md' : ''}
           hover:ring-1 hover:ring-gray-300 hover:rounded-md`}
       >
         <div className="font-medium">{day}</div>

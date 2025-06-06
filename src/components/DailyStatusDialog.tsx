@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, MapPin, Home } from 'lucide-react';
@@ -30,7 +29,7 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
   const { toast } = useToast();
 
   const isPT = user.role === 'pt';
-  const totalSteps = isPT ? 3 : 2; // PT questions + Leave question + Confirmation
+  const totalSteps = isPT ? 3 : 2;
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
@@ -74,16 +73,40 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
 
       console.log('Saving status data:', statusData);
 
-      const { error } = await supabase
+      // First, try to update existing record
+      const { data: existing } = await supabase
         .from('pt_status')
-        .upsert(statusData, { 
-          onConflict: 'user_id,date',
-          ignoreDuplicates: false 
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('date', statusData.date)
+        .single();
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from('pt_status')
+          .update({
+            table_number: statusData.table_number,
+            pt_type: statusData.pt_type,
+            is_leave: statusData.is_leave,
+            leave_dates: statusData.leave_dates
+          })
+          .eq('id', existing.id);
+
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('pt_status')
+          .insert([statusData]);
+
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
       }
 
       toast({

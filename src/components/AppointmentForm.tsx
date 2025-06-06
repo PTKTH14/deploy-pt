@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, Clock, Plus, Search, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -89,12 +88,12 @@ const NewAppointmentForm = () => {
         appointment_date: format(appointmentDate, 'yyyy-MM-dd'),
         appointment_time: formData.appointment_time || null,
         departments: formData.departments.length > 0 ? formData.departments : null,
-        appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' : 'out',
-        center: formData.center || null,
-        time_period: formData.time_period || null,
+        appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' as const : 'out' as const,
+        center: formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล' | null,
+        time_period: formData.time_period as 'ในเวลาราชการ' | 'นอกเวลาราชการ' | null,
         table_number: formData.table_number_display === 'เคสรวม' ? null : 
                      formData.table_number_display ? Number(formData.table_number_display) : null,
-        status: 'new',
+        status: 'new' as const,
         note: formData.note || null
       };
 
