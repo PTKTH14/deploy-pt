@@ -10,60 +10,25 @@ import AppointmentFormDialog from '@/components/AppointmentFormDialog';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-
-// Mock data for demonstration
-const initialMockPatients = [
-  {
-    id: '1',
-    full_name: 'สมชาย ใจดี',
-    cid: '1234567890123',
-    hn: 'HN001234',
-    right_type: 'UC',
-    phone_number: '081-234-5678',
-    address: '123 หมู่ 1 ต.ต้า อ.เมือง จ.นาน 55000'
-  },
-  {
-    id: '2',
-    full_name: 'มาลี สุขใส',
-    cid: '9876543210987',
-    hn: 'HN005678',
-    right_type: 'SSS',
-    phone_number: '082-345-6789',
-    address: '456 หมู่ 2 ต.พระเนตร อ.เมือง จ.นาน 55000'
-  },
-  {
-    id: '3',
-    full_name: 'วิชัย รุ่งเรือง',
-    cid: '5555666677778',
-    hn: 'HN009876',
-    right_type: 'CSMBS',
-    phone_number: '083-456-7890',
-    address: '789 หมู่ 3 ต.ป่าตาล อ.เมือง จ.นาน 55000'
-  }
-];
+import { usePatients, useSearchPatients } from '@/hooks/usePatients';
 
 const Patients = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [patients, setPatients] = useState(initialMockPatients);
-  const [filteredPatients, setFilteredPatients] = useState(initialMockPatients);
   const [showAddPatientDialog, setShowAddPatientDialog] = useState(false);
   const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // ใช้ข้อมูลจากฐานข้อมูลแทน mock data
+  const { data: patients = [], isLoading } = usePatients();
+  const { data: searchResults = [] } = useSearchPatients(searchQuery);
+  
+  // แสดงผลลัพธ์การค้นหาหรือผู้ป่วยทั้งหมดถ้าไม่มีการค้นหา
+  const displayedPatients = searchQuery.trim() ? searchResults : patients;
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.trim() === '') {
-      setFilteredPatients(patients);
-    } else {
-      const filtered = patients.filter(patient =>
-        patient.full_name.toLowerCase().includes(query.toLowerCase()) ||
-        patient.cid.includes(query) ||
-        patient.hn.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredPatients(filtered);
-    }
   };
 
   const handleSendToPT = (patient: any, tableNumber: number) => {
@@ -78,7 +43,6 @@ const Patients = () => {
       title: "เปิดฟอร์มนัดหมาย",
       description: `กำลังเปิดฟอร์มสร้างนัดหมายสำหรับ ${patient.full_name}`,
     });
-    // นำทางไปยังฟอร์มนัดหมายใหม่
     navigate('/appointments/new', { state: { patient } });
   };
 
@@ -102,11 +66,26 @@ const Patients = () => {
     setShowAppointmentDialog(true);
   };
 
-  const handlePatientAdded = (newPatient: any) => {
-    const updatedPatients = [...patients, newPatient];
-    setPatients(updatedPatients);
-    setFilteredPatients(updatedPatients);
+  const handlePatientAdded = () => {
+    // ไม่ต้องทำอะไรเพิ่ม เพราะ react-query จะ invalidate และ refresh ข้อมูลอัตโนมัติ
+    toast({
+      title: "เพิ่มผู้ป่วยสำเร็จ",
+      description: "เพิ่มข้อมูลผู้ป่วยใหม่เรียบร้อยแล้ว",
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="text-gray-500">กำลังโหลดข้อมูล...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -145,7 +124,7 @@ const Patients = () => {
               </div>
               {searchQuery && (
                 <p className="mt-2 text-sm text-gray-600">
-                  พบ {filteredPatients.length} รายการจากการค้นหา "{searchQuery}"
+                  พบ {displayedPatients.length} รายการจากการค้นหา "{searchQuery}"
                 </p>
               )}
             </CardContent>
@@ -153,10 +132,15 @@ const Patients = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredPatients.map((patient) => (
+          {displayedPatients.map((patient) => (
             <PatientCard
               key={patient.id}
-              patient={patient}
+              patient={{
+                ...patient,
+                // แปลง field names ให้ตรงกับที่ PatientCard คาดหวัง
+                right_type: patient.pttype_name || 'ไม่ระบุ',
+                address: patient.full_address || 'ไม่ระบุ'
+              }}
               onSendToPT={handleSendToPT}
               onSchedule={handleSchedule}
               onHomeVisit={handleHomeVisit}
@@ -166,7 +150,7 @@ const Patients = () => {
           ))}
         </div>
 
-        {filteredPatients.length === 0 && searchQuery && (
+        {displayedPatients.length === 0 && searchQuery && (
           <Card className="text-center py-12">
             <CardContent>
               <div className="text-gray-500">
@@ -177,16 +161,25 @@ const Patients = () => {
             </CardContent>
           </Card>
         )}
+
+        {displayedPatients.length === 0 && !searchQuery && (
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="text-gray-500">
+                <h3 className="text-lg font-semibold mb-2">ยังไม่มีข้อมูลผู้ป่วย</h3>
+                <p>กดปุ่ม "เพิ่มผู้ป่วยใหม่" เพื่อเริ่มต้น</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Add Patient Dialog */}
       <AddPatientDialog
         open={showAddPatientDialog}
         onOpenChange={setShowAddPatientDialog}
         onPatientAdded={handlePatientAdded}
       />
 
-      {/* Appointment Form Dialog */}
       <AppointmentFormDialog
         open={showAppointmentDialog}
         onOpenChange={setShowAppointmentDialog}

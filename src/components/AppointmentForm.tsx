@@ -12,9 +12,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useSearchPatients } from '@/hooks/usePatients';
+import { useAddAppointment } from '@/hooks/useAppointments';
+import { useToast } from '@/hooks/use-toast';
 
 const NewAppointmentForm = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [appointmentDate, setAppointmentDate] = useState(null);
@@ -27,7 +31,7 @@ const NewAppointmentForm = () => {
     appointment_date: null,
     appointment_time: '',
     departments: [],
-    type: '',
+    appointment_type: '',
     center: '',
     time_period: '',
     status: 'new',
@@ -35,41 +39,20 @@ const NewAppointmentForm = () => {
     note: ''
   });
 
-  // Mock patient data - replace with actual API call
-  const mockPatients = [
-    {
-      id: '1',
-      full_name: 'นางสาว สมหญิง ใจดี',
-      hn: 'HN 100001',
-      id_card: '1234567890123',
-      phone_number: '081-234-5678',
-      address: '123 ถ.สุขุมวิท กรุงเทพฯ 10110'
-    },
-    {
-      id: '2',
-      full_name: 'นาย สมชาย รักดี',
-      hn: 'HN 100002',
-      id_card: '1234567890124',
-      phone_number: '082-345-6789',
-      address: '456 ถ.พหลโยธิน กรุงเทพฯ 10400'
-    }
-  ];
-
-  const filteredPatients = mockPatients.filter(patient =>
-    patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.hn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.id_card.includes(searchTerm)
-  );
+  // ใช้ hook สำหรับค้นหาผู้ป่วยจากฐานข้อมูล
+  const { data: searchResults = [] } = useSearchPatients(searchTerm);
+  const addAppointmentMutation = useAddAppointment();
 
   const handlePatientSelect = (patient) => {
+    console.log('Selected patient:', patient);
     setSelectedPatient(patient);
     setFormData(prev => ({
       ...prev,
       patient_id: patient.id,
-      full_name: patient.full_name,
-      hn: patient.hn,
-      phone_number: patient.phone_number,
-      address: patient.address
+      full_name: patient.full_name || '',
+      hn: patient.hn || '',
+      phone_number: patient.phone_number || '',
+      address: patient.full_address || ''
     }));
     setSearchTerm('');
   };
@@ -83,25 +66,56 @@ const NewAppointmentForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Convert table_number_display to table_number
-    const table_number = formData.table_number_display === 'เคสรวม' 
-      ? null 
-      : Number(formData.table_number_display);
+    if (!selectedPatient || !appointmentDate) {
+      toast({
+        title: "ข้อมูลไม่ครบถ้วน",
+        description: "กรุณาเลือกผู้ป่วยและวันที่นัด",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const appointmentData = {
-      ...formData,
-      table_number,
-      appointment_date: appointmentDate
-    };
+    try {
+      // แปลงข้อมูลให้ตรงกับ schema ของฐานข้อมูล
+      const appointmentData = {
+        patient_id: formData.patient_id,
+        full_name: formData.full_name,
+        hn: formData.hn,
+        phone_number: formData.phone_number,
+        address: formData.address,
+        appointment_date: format(appointmentDate, 'yyyy-MM-dd'),
+        appointment_time: formData.appointment_time || null,
+        departments: formData.departments.length > 0 ? formData.departments : null,
+        appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' : 'out',
+        center: formData.center || null,
+        time_period: formData.time_period || null,
+        table_number: formData.table_number_display === 'เคสรวม' ? null : 
+                     formData.table_number_display ? Number(formData.table_number_display) : null,
+        status: 'new',
+        note: formData.note || null
+      };
 
-    console.log('Submitting appointment:', appointmentData);
-    
-    // TODO: Save to appointments collection
-    // After successful save, navigate back to appointments
-    navigate('/appointments');
+      console.log('Submitting appointment:', appointmentData);
+      
+      await addAppointmentMutation.mutateAsync(appointmentData);
+      
+      toast({
+        title: "บันทึกนัดหมายสำเร็จ",
+        description: `สร้างนัดหมายสำหรับ ${formData.full_name} เรียบร้อยแล้ว`,
+      });
+      
+      navigate('/appointments');
+    } catch (error) {
+      console.error('Error saving appointment:', error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถบันทึกนัดหมายได้ กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -137,18 +151,25 @@ const NewAppointmentForm = () => {
               </div>
 
               {/* Search Results */}
-              {searchTerm && (
+              {searchTerm && searchResults.length > 0 && (
                 <div className="border rounded-md max-h-48 overflow-y-auto">
-                  {filteredPatients.map((patient) => (
+                  {searchResults.map((patient) => (
                     <div
                       key={patient.id}
                       onClick={() => handlePatientSelect(patient)}
                       className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                     >
                       <div className="font-medium">{patient.full_name}</div>
-                      <div className="text-sm text-gray-500">{patient.hn} | {patient.id_card}</div>
+                      <div className="text-sm text-gray-500">{patient.hn} | {patient.cid}</div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* No results found */}
+              {searchTerm && searchResults.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  ไม่พบผู้ป่วยที่ค้นหา
                 </div>
               )}
 
@@ -215,7 +236,7 @@ const NewAppointmentForm = () => {
                 {/* Type */}
                 <div>
                   <label className="block text-sm font-medium mb-2">ประเภทนัด</label>
-                  <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
+                  <Select value={formData.appointment_type} onValueChange={(value) => setFormData(prev => ({ ...prev, appointment_type: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="เลือกประเภทนัด" />
                     </SelectTrigger>
@@ -314,10 +335,10 @@ const NewAppointmentForm = () => {
             <Button 
               type="submit" 
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!selectedPatient || !appointmentDate}
+              disabled={!selectedPatient || !appointmentDate || addAppointmentMutation.isPending}
             >
               <Plus className="w-4 h-4 mr-2" />
-              บันทึกนัดหมาย
+              {addAppointmentMutation.isPending ? 'กำลังบันทึก...' : 'บันทึกนัดหมาย'}
             </Button>
           </div>
         </form>
