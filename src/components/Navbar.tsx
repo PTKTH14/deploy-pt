@@ -1,11 +1,12 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Users, Calendar, MapPin, BarChart3, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const navigationItems = [
     { name: 'แดชบอร์ด', href: '/', icon: Home },
@@ -14,6 +15,28 @@ const Navbar = () => {
     { name: 'เยี่ยมบ้าน', href: '/home-visits', icon: MapPin },
     { name: 'รายงาน', href: '/reports', icon: BarChart3 },
   ];
+
+  // Filter navigation items based on user role
+  const getFilteredNavigation = () => {
+    if (!user) return navigationItems;
+    
+    switch (user.role) {
+      case 'แผนไทย':
+      case 'แผนจีน':
+        // Traditional medicine practitioners see limited navigation
+        return navigationItems.filter(item => 
+          ['/', '/appointments'].includes(item.href)
+        );
+      case 'admin':
+        // Admin sees everything
+        return navigationItems;
+      default:
+        // PT and others see standard navigation
+        return navigationItems;
+    }
+  };
+
+  const filteredNavigation = getFilteredNavigation();
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg">
@@ -25,7 +48,7 @@ const Navbar = () => {
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                {navigationItems.map((item) => {
+                {filteredNavigation.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.href;
                   return (
@@ -47,8 +70,15 @@ const Navbar = () => {
             </div>
           </div>
           <div className="flex items-center">
-            <span className="text-white text-sm mr-4">พีรพงษ์ เมืองอินทร์ (PT)</span>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700">
+            <span className="text-white text-sm mr-4">
+              {user?.full_name} ({user?.role?.toUpperCase()})
+            </span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-blue-700"
+              onClick={logout}
+            >
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
