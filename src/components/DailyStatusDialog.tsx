@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Clock } from 'lucide-react';
+import { CalendarIcon, MapPin, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,15 +23,14 @@ interface DailyStatusDialogProps {
 
 const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete }) => {
   const [step, setStep] = useState(1);
-  const [tableNumber, setTableNumber] = useState<string>(user.table_number?.toString() || '');
-  const [workType, setWorkType] = useState<string>(user.visit_type || '');
+  const [selectedChoice, setSelectedChoice] = useState<string>('');
   const [isOnLeave, setIsOnLeave] = useState(false);
   const [leaveDates, setLeaveDates] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const isPT = user.role === 'pt';
-  const totalSteps = 3; // PT questions + Leave question + Confirmation
+  const totalSteps = isPT ? 3 : 2; // PT questions + Leave question + Confirmation
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
@@ -50,14 +49,30 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
     setIsLoading(true);
     
     try {
+      let tableNumber = null;
+      let ptType = null;
+
+      if (isPT && selectedChoice) {
+        if (selectedChoice.startsWith('table-')) {
+          tableNumber = parseInt(selectedChoice.replace('table-', ''));
+          ptType = 'ประจำศูนย์';
+        } else if (selectedChoice === 'center') {
+          ptType = 'ประจำศูนย์';
+        } else if (selectedChoice === 'homevisit') {
+          ptType = 'เยี่ยมบ้าน';
+        }
+      }
+
       const statusData = {
         user_id: user.id,
         date: new Date().toISOString().split('T')[0],
-        table_number: isPT && tableNumber ? parseInt(tableNumber) : null,
-        pt_type: isPT ? workType : null,
+        table_number: tableNumber,
+        pt_type: ptType,
         is_leave: isOnLeave,
         leave_dates: leaveDates.map(date => date.toISOString().split('T')[0])
       };
+
+      console.log('Saving status data:', statusData);
 
       const { error } = await supabase
         .from('pt_status')
@@ -66,7 +81,10 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
           ignoreDuplicates: false 
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
       toast({
         title: "บันทึกข้อมูลสำเร็จ",
@@ -91,39 +109,42 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
       return (
         <div className="space-y-6">
           <div>
-            <Label className="text-base font-medium">วันนี้คุณอยู่โต๊ะไหน?</Label>
-            <RadioGroup value={tableNumber} onValueChange={setTableNumber} className="mt-2">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="1" id="table1" />
-                <Label htmlFor="table1">โต๊ะ 1</Label>
+            <Label className="text-base font-medium mb-4 block">1. วันนี้คุณทำงานอย่างไร? (เลือกได้ 1 อย่าง)</Label>
+            <RadioGroup value={selectedChoice} onValueChange={setSelectedChoice} className="space-y-3">
+              <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="table-1" id="table1" />
+                <div className="flex items-center space-x-2">
+                  <span className="text-red-600">🪑</span>
+                  <Label htmlFor="table1" className="cursor-pointer">โต๊ะ 1 (ในเขต)</Label>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="2" id="table2" />
-                <Label htmlFor="table2">โต๊ะ 2</Label>
+              <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="table-2" id="table2" />
+                <div className="flex items-center space-x-2">
+                  <span className="text-red-600">🪑</span>
+                  <Label htmlFor="table2" className="cursor-pointer">โต๊ะ 2 (ในเขต)</Label>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3" id="table3" />
-                <Label htmlFor="table3">โต๊ะ 3</Label>
+              <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="table-3" id="table3" />
+                <div className="flex items-center space-x-2">
+                  <span className="text-red-600">🪑</span>
+                  <Label htmlFor="table3" className="cursor-pointer">โต๊ะ 3 (ในเขต)</Label>
+                </div>
               </div>
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">ประเภทการทำงาน:</Label>
-            <RadioGroup value={workType} onValueChange={setWorkType} className="mt-2">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="ประจำศูนย์" id="center" />
-                <Label htmlFor="center" className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  ประจำศูนย์
-                </Label>
+              <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="center" id="center" />
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-5 h-5 text-blue-600" />
+                  <Label htmlFor="center" className="cursor-pointer">ตั้งประจำศูนย์</Label>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="เยี่ยมบ้าน" id="homevisit" />
-                <Label htmlFor="homevisit" className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  เยี่ยมบ้าน
-                </Label>
+              <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="homevisit" id="homevisit" />
+                <div className="flex items-center space-x-2">
+                  <Home className="w-5 h-5 text-green-600" />
+                  <Label htmlFor="homevisit" className="cursor-pointer">เยี่ยมบ้าน</Label>
+                </div>
               </div>
             </RadioGroup>
           </div>
@@ -135,14 +156,36 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
       return (
         <div className="space-y-6">
           <div>
-            <Label className="text-base font-medium">วันนี้มีการลาหรือหยุดงานหรือไม่?</Label>
-            <div className="flex items-center space-x-2 mt-2">
-              <Checkbox 
-                id="onLeave" 
-                checked={isOnLeave} 
-                onCheckedChange={(checked) => setIsOnLeave(checked === true)}
-              />
-              <Label htmlFor="onLeave">มีการลาหรือหยุดงาน</Label>
+            <Label className="text-base font-medium mb-4 block">2. มีการลาหรือหยุดงานหรือไม่?</Label>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 p-3 border rounded-lg">
+                <input 
+                  type="radio" 
+                  id="noLeave" 
+                  name="leaveStatus"
+                  checked={!isOnLeave}
+                  onChange={() => setIsOnLeave(false)}
+                  className="w-4 h-4"
+                />
+                <div className="flex items-center space-x-2">
+                  <span className="text-red-500">❌</span>
+                  <Label htmlFor="noLeave" className="cursor-pointer">ไม่มี</Label>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 p-3 border rounded-lg">
+                <input 
+                  type="radio" 
+                  id="hasLeave" 
+                  name="leaveStatus"
+                  checked={isOnLeave}
+                  onChange={() => setIsOnLeave(true)}
+                  className="w-4 h-4"
+                />
+                <div className="flex items-center space-x-2">
+                  <span className="text-green-500">✅</span>
+                  <Label htmlFor="hasLeave" className="cursor-pointer">มี (เลือกวันที่)</Label>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -197,11 +240,14 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
         <div className="bg-gray-50 p-4 rounded space-y-2">
           <p><strong>ชื่อ:</strong> {user.full_name}</p>
           <p><strong>บทบาท:</strong> {user.role}</p>
-          {isPT && (
-            <>
-              <p><strong>โต๊ะ:</strong> {tableNumber}</p>
-              <p><strong>ประเภทงาน:</strong> {workType}</p>
-            </>
+          {isPT && selectedChoice && (
+            <p><strong>การทำงาน:</strong> {
+              selectedChoice.startsWith('table-') 
+                ? `โต๊ะ ${selectedChoice.replace('table-', '')} (ในเขต)` 
+                : selectedChoice === 'center' 
+                ? 'ตั้งประจำศูนย์' 
+                : 'เยี่ยมบ้าน'
+            }</p>
           )}
           <p><strong>สถานะลา:</strong> {isOnLeave ? 'มีการลา' : 'ไม่มีการลา'}</p>
           {isOnLeave && leaveDates.length > 0 && (
@@ -214,7 +260,7 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
 
   const canProceed = () => {
     if (step === 1 && isPT) {
-      return tableNumber && workType;
+      return selectedChoice !== '';
     }
     if ((step === 2 && isPT) || (step === 1 && !isPT)) {
       return !isOnLeave || leaveDates.length > 0;
@@ -223,18 +269,10 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
   };
 
   const nextStep = () => {
-    if (isPT) {
-      if (step < totalSteps) {
-        setStep(step + 1);
-      } else {
-        handleSubmit();
-      }
+    if (step < totalSteps) {
+      setStep(step + 1);
     } else {
-      if (step < 2) {
-        setStep(step + 1);
-      } else {
-        handleSubmit();
-      }
+      handleSubmit();
     }
   };
 
@@ -246,7 +284,7 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
 
   return (
     <Dialog open={true}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>ข้อมูลสถานะรายวัน</DialogTitle>
           <DialogDescription>
@@ -267,9 +305,10 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
             <Button 
               onClick={nextStep}
               disabled={!canProceed() || isLoading}
+              className="bg-gradient-to-r from-blue-400 to-green-400 hover:from-blue-500 hover:to-green-500 text-white"
             >
               {isLoading ? 'กำลังบันทึก...' : 
-               (step === totalSteps || (!isPT && step === 2)) ? 'บันทึก' : 'ถัดไป'}
+               step === totalSteps ? 'ดำเนินการ' : 'ถัดไป'}
             </Button>
           </div>
         </div>
