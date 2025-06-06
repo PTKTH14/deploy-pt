@@ -54,13 +54,13 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
         user_id: user.id,
         date: new Date().toISOString().split('T')[0],
         table_number: isPT && tableNumber ? parseInt(tableNumber) : null,
-        work_type: isPT ? workType : null,
-        is_on_leave: isOnLeave,
+        pt_type: isPT ? workType : null,
+        is_leave: isOnLeave,
         leave_dates: leaveDates.map(date => date.toISOString().split('T')[0])
       };
 
       const { error } = await supabase
-        .from('daily_status')
+        .from('pt_status')
         .upsert(statusData, { 
           onConflict: 'user_id,date',
           ignoreDuplicates: false 
@@ -140,7 +140,7 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
               <Checkbox 
                 id="onLeave" 
                 checked={isOnLeave} 
-                onCheckedChange={setIsOnLeave}
+                onCheckedChange={(checked) => setIsOnLeave(checked === true)}
               />
               <Label htmlFor="onLeave">มีการลาหรือหยุดงาน</Label>
             </div>
