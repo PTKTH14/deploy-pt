@@ -6,7 +6,7 @@ import type { TablesInsert } from '@/integrations/supabase/types';
 export const useAppointments = (filters?: {
   department?: string;
   date?: string;
-  center?: string;
+  center?: 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล';
 }) => {
   return useQuery({
     queryKey: ['appointments', filters],
