@@ -22,7 +22,7 @@ const Dashboard = () => {
   const todayCount = todayAppointments.length;
   const totalPatients = new Set(allAppointments.map(apt => apt.patient_id || apt.hn)).size;
   const homeVisitsToday = todayAppointments.filter(apt => apt.appointment_type === 'out').length;
-  const completedToday = todayAppointments.filter(apt => apt.status === 'completed').length;
+  const completedToday = todayAppointments.filter(apt => apt.status === 'done').length;
 
   const stats = [{
     title: 'นัดหมายวันนี้',
@@ -75,19 +75,16 @@ const Dashboard = () => {
     patient: apt.full_name || 'ไม่ระบุชื่อ',
     type: apt.departments?.[0] || 'ทั่วไป',
     table: apt.table_number ? `โต๊ะ ${apt.table_number}` : 'เคสรวม',
-    status: apt.status || 'waiting'
+    status: apt.status || 'new'
   }));
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'waiting':
       case 'new':
         return 'bg-yellow-100 text-yellow-800';
       case 'processing':
-      case 'in_progress':
         return 'bg-blue-100 text-blue-800';
       case 'done':
-      case 'completed':
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -96,14 +93,11 @@ const Dashboard = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'waiting':
       case 'new':
         return 'รอ';
       case 'processing':
-      case 'in_progress':
         return 'กำลังรักษา';
       case 'done':
-      case 'completed':
         return 'เสร็จสิ้น';
       default:
         return 'ไม่ทราบ';
@@ -113,7 +107,8 @@ const Dashboard = () => {
   // ตรวจสอบว่าเป็น PT user หรือไม่
   const isPTUser = user?.role === 'pt';
 
-  return <div className="min-h-screen bg-gray-50">
+  return (
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -123,9 +118,10 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map(stat => {
-          const Icon = stat.icon;
-          return <Card key={stat.title} className="hover:shadow-lg transition-shadow">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={stat.title} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -144,8 +140,9 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>;
-        })}
+              </Card>
+            );
+          })}
         </div>
 
         <div className="mb-8">
@@ -201,7 +198,8 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {formattedTodayAppointments.map((appointment, index) => <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                {formattedTodayAppointments.map((appointment, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex items-center space-x-4">
                       <div className="text-sm font-medium text-gray-900 min-w-[60px]">
                         {appointment.time}
@@ -214,11 +212,14 @@ const Dashboard = () => {
                     <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
                       {getStatusText(appointment.status)}
                     </div>
-                  </div>)}
-                {formattedTodayAppointments.length === 0 && <div className="text-center py-8 text-gray-500">
+                  </div>
+                ))}
+                {formattedTodayAppointments.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
                     <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p>ไม่มีนัดหมายวันนี้</p>
-                  </div>}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -247,13 +248,15 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {isPTUser && <Card>
+          {isPTUser && (
+            <Card>
               <CardHeader>
                 <CardTitle>สถานะโต๊ะ PT</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {ptTableStats.map((table, index) => <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  {ptTableStats.map((table, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className={`w-3 h-3 rounded-full ${table.patients >= 12 ? 'bg-red-500' : 'bg-green-500'}`}></div>
                         <span className="font-medium">{table.table}</span>
@@ -262,10 +265,12 @@ const Dashboard = () => {
                         <span className="font-semibold">{table.patients}/12</span>
                         <p className="text-xs text-gray-500">ผู้ป่วย</p>
                       </div>
-                    </div>)}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
-            </Card>}
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -294,7 +299,8 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Dashboard;
