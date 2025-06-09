@@ -27,9 +27,9 @@ const AppointmentTabs = ({
   // Filter states
   const [searchName, setSearchName] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedAppointmentType, setSelectedAppointmentType] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedAppointmentType, setSelectedAppointmentType] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
   // Check if department should show table tabs
   const shouldShowTables = department === 'กายภาพ' || department === 'แผนจีน';
@@ -154,9 +154,9 @@ const AppointmentTabs = ({
     return appointments.filter(appointment => {
       const matchesName = !searchName || appointment.name.toLowerCase().includes(searchName.toLowerCase());
       const matchesDate = !selectedDate || appointment.time.includes(selectedDate);
-      const matchesDepartment = !selectedDepartment || appointment.department === selectedDepartment;
-      const matchesAppointmentType = !selectedAppointmentType || appointment.appointmentType === selectedAppointmentType;
-      const matchesStatus = !selectedStatus || appointment.status === selectedStatus;
+      const matchesDepartment = selectedDepartment === 'all' || appointment.department === selectedDepartment;
+      const matchesAppointmentType = selectedAppointmentType === 'all' || appointment.appointmentType === selectedAppointmentType;
+      const matchesStatus = selectedStatus === 'all' || appointment.status === selectedStatus;
       
       return matchesName && matchesDate && matchesDepartment && matchesAppointmentType && matchesStatus;
     });
@@ -416,7 +416,7 @@ const AppointmentTabs = ({
               <SelectValue placeholder="กรองตามแผนก" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">ทุกแผนก</SelectItem>
+              <SelectItem value="all">ทุกแผนก</SelectItem>
               <SelectItem value="กายภาพ">กายภาพ</SelectItem>
               <SelectItem value="แผนจีน">แผนจีน</SelectItem>
               <SelectItem value="แผนไทย">แผนไทย</SelectItem>
@@ -429,7 +429,7 @@ const AppointmentTabs = ({
               <SelectValue placeholder="กรองตามประเภท" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">ทุกประเภท</SelectItem>
+              <SelectItem value="all">ทุกประเภท</SelectItem>
               <SelectItem value="นวดบำบัด">นวดบำบัด</SelectItem>
               <SelectItem value="ฟื้นฟูสมรรถภาพ">ฟื้นฟูสมรรถภาพ</SelectItem>
               <SelectItem value="ฝังเข็ม">ฝังเข็ม</SelectItem>
@@ -443,7 +443,7 @@ const AppointmentTabs = ({
               <SelectValue placeholder="กรองตามสถานะ" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">ทุกสถานะ</SelectItem>
+              <SelectItem value="all">ทุกสถานะ</SelectItem>
               <SelectItem value="confirmed">ยืนยันแล้ว</SelectItem>
               <SelectItem value="pending">รอดำเนินการ</SelectItem>
               <SelectItem value="cancelled">ยกเลิก</SelectItem>
