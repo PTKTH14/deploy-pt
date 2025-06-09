@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,115 +6,122 @@ import { Users, Calendar, MapPin, Plus, TrendingUp, Clock, CheckCircle, AlertCir
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import DashboardChart from '@/components/DashboardChart';
+import { useAppointments } from '@/hooks/useAppointments';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
+
 const Dashboard = () => {
+  const { user } = useAuth();
+  const today = format(new Date(), 'yyyy-MM-dd');
+  
+  // ดึงข้อมูลนัดหมายวันนี้
+  const { data: todayAppointments = [] } = useAppointments({ date: today });
+  const { data: allAppointments = [] } = useAppointments();
+
+  // คำนวณสถิติจากข้อมูลจริง
+  const todayCount = todayAppointments.length;
+  const totalPatients = new Set(allAppointments.map(apt => apt.patient_id || apt.hn)).size;
+  const homeVisitsToday = todayAppointments.filter(apt => apt.appointment_type === 'out').length;
+  const completedToday = todayAppointments.filter(apt => apt.status === 'completed').length;
+
   const stats = [{
     title: 'นัดหมายวันนี้',
-    value: '24',
-    change: '+3 จากเมื่อวาน',
+    value: todayCount.toString(),
+    change: 'ตามแผน',
     icon: Calendar,
     color: 'text-blue-600',
     bgColor: 'bg-blue-100'
   }, {
     title: 'ผู้ป่วยทั้งหมด',
-    value: '1,247',
-    change: '+12 คนใหม่',
+    value: totalPatients.toString(),
+    change: 'ในระบบ',
     icon: Users,
     color: 'text-green-600',
     bgColor: 'bg-green-100'
   }, {
     title: 'เยี่ยมบ้านวันนี้',
-    value: '8',
+    value: homeVisitsToday.toString(),
     change: 'ตามแผน',
     icon: MapPin,
     color: 'text-yellow-600',
     bgColor: 'bg-yellow-100'
   }, {
     title: 'เสร็จสิ้นแล้ว',
-    value: '18',
-    change: '75% ของนัด',
+    value: completedToday.toString(),
+    change: `${todayCount > 0 ? Math.round((completedToday / todayCount) * 100) : 0}% ของนัด`,
     icon: CheckCircle,
     color: 'text-purple-600',
     bgColor: 'bg-purple-100'
   }];
-  const todayAppointments = [{
-    time: '09:00',
-    patient: 'สมชาย ใจดี',
-    type: 'กายภาพ',
-    table: 'โต๊ะ 1',
-    status: 'waiting'
-  }, {
-    time: '09:30',
-    patient: 'มาลี สุขใส',
-    type: 'แผนไทย',
-    table: 'โต๊ะ 2',
-    status: 'processing'
-  }, {
-    time: '10:00',
-    patient: 'วิชัย รุ่งเรือง',
-    type: 'แผนจีน',
-    table: 'โต๊ะ 3',
-    status: 'done'
-  }, {
-    time: '10:30',
-    patient: 'สุดา แสงใส',
-    type: 'กายภาพ',
-    table: 'โต๊ะ 1',
-    status: 'waiting'
-  }];
 
-  // PT Table data for PT users
+  // PT Table data for PT users only
   const ptTableStats = [{
     table: 'โต๊ะ 1',
-    patients: 8,
+    patients: todayAppointments.filter(apt => apt.table_number === 1).length,
     status: 'normal'
   }, {
     table: 'โต๊ะ 2',
-    patients: 12,
-    status: 'full'
+    patients: todayAppointments.filter(apt => apt.table_number === 2).length,
+    status: 'normal'
   }, {
     table: 'โต๊ะ 3',
-    patients: 6,
+    patients: todayAppointments.filter(apt => apt.table_number === 3).length,
     status: 'normal'
   }];
+
+  // แปลงข้อมูลสำหรับแสดงผล
+  const formattedTodayAppointments = todayAppointments.slice(0, 8).map(apt => ({
+    time: apt.appointment_time || '09:00',
+    patient: apt.full_name || 'ไม่ระบุชื่อ',
+    type: apt.departments?.[0] || 'ทั่วไป',
+    table: apt.table_number ? `โต๊ะ ${apt.table_number}` : 'เคสรวม',
+    status: apt.status || 'waiting'
+  }));
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'waiting':
+      case 'new':
         return 'bg-yellow-100 text-yellow-800';
       case 'processing':
+      case 'in_progress':
         return 'bg-blue-100 text-blue-800';
       case 'done':
+      case 'completed':
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'waiting':
+      case 'new':
         return 'รอ';
       case 'processing':
+      case 'in_progress':
         return 'กำลังรักษา';
       case 'done':
+      case 'completed':
         return 'เสร็จสิ้น';
       default:
         return 'ไม่ทราบ';
     }
   };
 
-  // Simulate PT user check (in real app, this would come from auth context)
-  const isPTUser = true; // For demo purposes
+  // ตรวจสอบว่าเป็น PT user หรือไม่
+  const isPTUser = user?.role === 'pt';
 
   return <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">แดชบอร์ด</h1>
           <p className="text-gray-600">ภาพรวมระบบจัดการนัดหมายผู้ป่วย CareSync+</p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map(stat => {
           const Icon = stat.icon;
@@ -140,14 +148,12 @@ const Dashboard = () => {
         })}
         </div>
 
-        {/* Charts Section */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">สถิติและกราฟ</h2>
           <DashboardChart />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Quick Actions */}
           <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -181,7 +187,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Today's Appointments */}
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -196,7 +201,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {todayAppointments.map((appointment, index) => <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                {formattedTodayAppointments.map((appointment, index) => <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex items-center space-x-4">
                       <div className="text-sm font-medium text-gray-900 min-w-[60px]">
                         {appointment.time}
@@ -210,7 +215,7 @@ const Dashboard = () => {
                       {getStatusText(appointment.status)}
                     </div>
                   </div>)}
-                {todayAppointments.length === 0 && <div className="text-center py-8 text-gray-500">
+                {formattedTodayAppointments.length === 0 && <div className="text-center py-8 text-gray-500">
                     <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p>ไม่มีนัดหมายวันนี้</p>
                   </div>}
@@ -219,7 +224,6 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Additional Info */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
@@ -229,21 +233,20 @@ const Dashboard = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">กายภาพบำบัด</span>
-                  <span className="font-semibold">15 คน</span>
+                  <span className="font-semibold">{todayAppointments.filter(apt => apt.departments?.includes('กายภาพบำบัด')).length} คน</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">แผนไทย</span>
-                  <span className="font-semibold">6 คน</span>
+                  <span className="font-semibold">{todayAppointments.filter(apt => apt.departments?.includes('แผนไทย')).length} คน</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">แผนจีน</span>
-                  <span className="font-semibold">3 คน</span>
+                  <span className="font-semibold">{todayAppointments.filter(apt => apt.departments?.includes('แผนจีน')).length} คน</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* PT Table Status - Only visible for PT users */}
           {isPTUser && <Card>
               <CardHeader>
                 <CardTitle>สถานะโต๊ะ PT</CardTitle>
@@ -252,7 +255,7 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   {ptTableStats.map((table, index) => <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${table.status === 'full' ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                        <div className={`w-3 h-3 rounded-full ${table.patients >= 12 ? 'bg-red-500' : 'bg-green-500'}`}></div>
                         <span className="font-medium">{table.table}</span>
                       </div>
                       <div className="text-right">
@@ -270,18 +273,20 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-yellow-600" />
-                  <div>
-                    <p className="font-medium text-yellow-800">โต๊ะ 2 เต็ม</p>
-                    <p className="text-sm text-yellow-600">มีนัดหมาย 12 คน</p>
+                {ptTableStats.some(table => table.patients >= 12) && (
+                  <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <div>
+                      <p className="font-medium text-yellow-800">โต๊ะเต็ม</p>
+                      <p className="text-sm text-yellow-600">มีโต๊ะที่เต็มแล้ว</p>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
                   <CheckCircle className="w-5 h-5 text-blue-600" />
                   <div>
-                    <p className="font-medium text-blue-800">เยี่ยมบ้านเสร็จ</p>
-                    <p className="text-sm text-blue-600">6 จาก 8 รายการ</p>
+                    <p className="font-medium text-blue-800">นัดหมายวันนี้</p>
+                    <p className="text-sm text-blue-600">{todayCount} รายการ</p>
                   </div>
                 </div>
               </div>
@@ -291,4 +296,5 @@ const Dashboard = () => {
       </div>
     </div>;
 };
+
 export default Dashboard;

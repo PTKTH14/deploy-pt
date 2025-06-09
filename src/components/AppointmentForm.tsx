@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, Clock, Plus, Search, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ const NewAppointmentForm = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(undefined);
+  const [manualEntry, setManualEntry] = useState(false);
   const [formData, setFormData] = useState({
     patient_id: '',
     full_name: '',
@@ -32,14 +32,13 @@ const NewAppointmentForm = () => {
     appointment_time: '',
     departments: [] as string[],
     appointment_type: '',
-    center: 'รพ.สต.ต้า', // ค่าเริ่มต้น
+    center: 'รพ.สต.ต้า',
     time_period: '',
     status: 'new',
     table_number_display: '',
     note: ''
   });
 
-  // ใช้ hook สำหรับค้นหาผู้ป่วยจากฐานข้อมูล
   const { data: searchResults = [] } = useSearchPatients(searchTerm);
   const addAppointmentMutation = useAddAppointment();
 
@@ -55,6 +54,21 @@ const NewAppointmentForm = () => {
       address: patient.full_address || ''
     }));
     setSearchTerm('');
+    setManualEntry(false);
+  };
+
+  const handleManualEntry = () => {
+    setManualEntry(true);
+    setSelectedPatient(null);
+    setSearchTerm('');
+    setFormData(prev => ({
+      ...prev,
+      patient_id: '',
+      full_name: '',
+      hn: '',
+      phone_number: '',
+      address: ''
+    }));
   };
 
   const handleDepartmentChange = (department: string, checked: boolean) => {
@@ -69,16 +83,24 @@ const NewAppointmentForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedPatient || !appointmentDate) {
+    if ((!selectedPatient && !manualEntry) || !appointmentDate) {
       toast({
         title: "ข้อมูลไม่ครบถ้วน",
-        description: "กรุณาเลือกผู้ป่วยและวันที่นัด",
+        description: "กรุณาเลือกผู้ป่วยหรือกรอกข้อมูลและวันที่นัด",
         variant: "destructive",
       });
       return;
     }
 
-    // ตรวจสอบว่าเลือกศูนย์บริการแล้วหรือไม่
+    if (manualEntry && (!formData.full_name || !formData.hn)) {
+      toast({
+        title: "ข้อมูลไม่ครบถ้วน",
+        description: "กรุณากรอกชื่อและ HN",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.center) {
       toast({
         title: "ข้อมูลไม่ครบถ้วน",
@@ -89,9 +111,8 @@ const NewAppointmentForm = () => {
     }
 
     try {
-      // แปลงข้อมูลให้ตรงกับ schema ของฐานข้อมูล
       const appointmentData = {
-        patient_id: formData.patient_id,
+        patient_id: formData.patient_id || null,
         full_name: formData.full_name,
         hn: formData.hn,
         phone_number: formData.phone_number,
@@ -144,46 +165,100 @@ const NewAppointmentForm = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Patient Search Section */}
           <Card>
             <CardHeader>
-              <CardTitle>ค้นหาข้อมูลผู้ป่วย</CardTitle>
+              <CardTitle>ข้อมูลผู้ป่วย</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="ค้นหาด้วยชื่อ, HN, หรือเลขบัตรประชาชน"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex gap-4 mb-4">
+                <Button
+                  type="button"
+                  variant={!manualEntry ? "default" : "outline"}
+                  onClick={() => setManualEntry(false)}
+                >
+                  ค้นหาจากฐานข้อมูล
+                </Button>
+                <Button
+                  type="button"
+                  variant={manualEntry ? "default" : "outline"}
+                  onClick={handleManualEntry}
+                >
+                  กรอกข้อมูลเอง
+                </Button>
               </div>
 
-              {/* Search Results */}
-              {searchTerm && searchResults.length > 0 && (
-                <div className="border rounded-md max-h-48 overflow-y-auto">
-                  {searchResults.map((patient) => (
-                    <div
-                      key={patient.id}
-                      onClick={() => handlePatientSelect(patient)}
-                      className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                    >
-                      <div className="font-medium">{patient.full_name}</div>
-                      <div className="text-sm text-gray-500">{patient.hn} | {patient.cid}</div>
+              {!manualEntry ? (
+                <>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="ค้นหาด้วยชื่อ, HN, หรือเลขบัตรประชาชน"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {searchTerm && searchResults.length > 0 && (
+                    <div className="border rounded-md max-h-48 overflow-y-auto">
+                      {searchResults.map((patient) => (
+                        <div
+                          key={patient.id}
+                          onClick={() => handlePatientSelect(patient)}
+                          className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                        >
+                          <div className="font-medium">{patient.full_name}</div>
+                          <div className="text-sm text-gray-500">{patient.hn} | {patient.cid}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+
+                  {searchTerm && searchResults.length === 0 && (
+                    <div className="text-center py-4 text-gray-500">
+                      ไม่พบผู้ป่วยที่ค้นหา
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">ชื่อ-นามสกุล *</label>
+                    <Input
+                      placeholder="กรอกชื่อ-นามสกุล"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">เลข HN *</label>
+                    <Input
+                      placeholder="กรอกเลข HN"
+                      value={formData.hn}
+                      onChange={(e) => setFormData(prev => ({ ...prev, hn: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">เบอร์โทร</label>
+                    <Input
+                      placeholder="กรอกเบอร์โทร"
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-2">ที่อยู่</label>
+                    <Input
+                      placeholder="กรอกที่อยู่"
+                      value={formData.address}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                    />
+                  </div>
                 </div>
               )}
 
-              {/* No results found */}
-              {searchTerm && searchResults.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  ไม่พบผู้ป่วยที่ค้นหา
-                </div>
-              )}
-
-              {/* Selected Patient Info */}
               {selectedPatient && (
                 <div className="bg-blue-50 p-4 rounded-md">
                   <h4 className="font-medium text-blue-900 mb-2">ข้อมูลผู้ป่วยที่เลือก</h4>
@@ -198,14 +273,12 @@ const NewAppointmentForm = () => {
             </CardContent>
           </Card>
 
-          {/* Appointment Details */}
           <Card>
             <CardHeader>
               <CardTitle>รายละเอียดการนัดหมาย</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Date Picker */}
                 <div>
                   <label className="block text-sm font-medium mb-2">วันที่นัด *</label>
                   <Popover>
@@ -233,7 +306,6 @@ const NewAppointmentForm = () => {
                   </Popover>
                 </div>
 
-                {/* Time Picker */}
                 <div>
                   <label className="block text-sm font-medium mb-2">เวลานัด</label>
                   <Input
@@ -243,7 +315,6 @@ const NewAppointmentForm = () => {
                   />
                 </div>
 
-                {/* Type */}
                 <div>
                   <label className="block text-sm font-medium mb-2">ประเภทนัด</label>
                   <Select value={formData.appointment_type} onValueChange={(value) => setFormData(prev => ({ ...prev, appointment_type: value }))}>
@@ -257,7 +328,6 @@ const NewAppointmentForm = () => {
                   </Select>
                 </div>
 
-                {/* Center */}
                 <div>
                   <label className="block text-sm font-medium mb-2">ศูนย์บริการ *</label>
                   <Select value={formData.center} onValueChange={(value) => setFormData(prev => ({ ...prev, center: value }))}>
@@ -272,7 +342,6 @@ const NewAppointmentForm = () => {
                   </Select>
                 </div>
 
-                {/* Time Period */}
                 <div>
                   <label className="block text-sm font-medium mb-2">ช่วงเวลา</label>
                   <Select value={formData.time_period} onValueChange={(value) => setFormData(prev => ({ ...prev, time_period: value }))}>
@@ -286,7 +355,6 @@ const NewAppointmentForm = () => {
                   </Select>
                 </div>
 
-                {/* Table Number */}
                 <div>
                   <label className="block text-sm font-medium mb-2">โต๊ะ</label>
                   <Select value={formData.table_number_display} onValueChange={(value) => setFormData(prev => ({ ...prev, table_number_display: value }))}>
@@ -303,7 +371,6 @@ const NewAppointmentForm = () => {
                 </div>
               </div>
 
-              {/* Departments */}
               <div>
                 <label className="block text-sm font-medium mb-2">แผนก (เลือกได้หลายแผนก)</label>
                 <div className="flex flex-wrap gap-4">
@@ -320,7 +387,6 @@ const NewAppointmentForm = () => {
                 </div>
               </div>
 
-              {/* Note */}
               <div>
                 <label className="block text-sm font-medium mb-2">หมายเหตุ</label>
                 <Textarea
@@ -333,7 +399,6 @@ const NewAppointmentForm = () => {
             </CardContent>
           </Card>
 
-          {/* Submit Buttons */}
           <div className="flex justify-end space-x-4">
             <Button 
               type="button" 
@@ -345,7 +410,7 @@ const NewAppointmentForm = () => {
             <Button 
               type="submit" 
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!selectedPatient || !appointmentDate || addAppointmentMutation.isPending}
+              disabled={(!selectedPatient && !manualEntry) || !appointmentDate || addAppointmentMutation.isPending}
             >
               <Plus className="w-4 h-4 mr-2" />
               {addAppointmentMutation.isPending ? 'กำลังบันทึก...' : 'บันทึกนัดหมาย'}

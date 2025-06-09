@@ -1,23 +1,35 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useAppointments } from '@/hooks/useAppointments';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface AppointmentCalendarProps {
   department?: string;
+  center?: 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล';
 }
 
-const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentCalendarProps) => {
+const AppointmentCalendar = ({ department = "กายภาพ", center }: AppointmentCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showAppointmentList, setShowAppointmentList] = useState(false);
   
   // Fetch appointments for the current month
   const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
   const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
   
   const { data: appointments = [] } = useAppointments({
-    department: department === "กายภาพ" ? "กายภาพบำบัด" : department
+    department: department === "กายภาพ" ? "กายภาพบำบัด" : department,
+    center
+  });
+
+  // Fetch appointments for selected date
+  const { data: selectedDateAppointments = [] } = useAppointments({
+    department: department === "กายภาพ" ? "กายภาพบำบัด" : department,
+    date: selectedDate || undefined,
+    center
   });
 
   // Count appointments per day
@@ -68,6 +80,12 @@ const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentC
     }
   };
 
+  const handleDayClick = (day: number) => {
+    const clickedDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth(), day), 'yyyy-MM-dd');
+    setSelectedDate(clickedDate);
+    setShowAppointmentList(true);
+  };
+
   const renderCalendarDay = (day: number, isCurrentMonth: boolean = true, index: number) => {
     if (!isCurrentMonth) {
       return (
@@ -85,6 +103,7 @@ const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentC
     return (
       <div 
         key={`current-${day}`}
+        onClick={() => handleDayClick(day)}
         className={`h-16 p-1 text-sm cursor-pointer transition-all duration-200 relative
           ${getDayStyle(day)} 
           ${isToday ? 'ring-2 ring-blue-400 rounded-md' : ''}
@@ -130,61 +149,115 @@ const AppointmentCalendar = ({ department = "กายภาพ" }: AppointmentC
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          <span>ปฏิทินนัดหมาย</span>
-          <div className="flex items-center gap-4">
-            <button 
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              onClick={() => navigateMonth('prev')}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-sm font-normal min-w-[120px] text-center">
-              {months[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </span>
-            <button 
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
-              onClick={() => navigateMonth('next')}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </CardTitle>
-        
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
-            <span>ว่าง (&lt; 8)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-100 border border-yellow-200 rounded"></div>
-            <span>เก็อบเต็ม (8-11)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
-            <span>เต็ม (≥12)</span>
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {/* Header */}
-          <div className="font-semibold py-2 text-sm text-gray-600">อา</div>
-          <div className="font-semibold py-2 text-sm text-gray-600">จ</div>
-          <div className="font-semibold py-2 text-sm text-gray-600">อ</div>
-          <div className="font-semibold py-2 text-sm text-gray-600">พ</div>
-          <div className="font-semibold py-2 text-sm text-gray-600">พฤ</div>
-          <div className="font-semibold py-2 text-sm text-gray-600">ศ</div>
-          <div className="font-semibold py-2 text-sm text-gray-600">ส</div>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex justify-between items-center">
+            <span>ปฏิทินนัดหมาย {center && `- ${center}`}</span>
+            <div className="flex items-center gap-4">
+              <button 
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                onClick={() => navigateMonth('prev')}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-normal min-w-[120px] text-center">
+                {months[currentDate.getMonth()]} {currentDate.getFullYear()}
+              </span>
+              <button 
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                onClick={() => navigateMonth('next')}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </CardTitle>
           
-          {/* Calendar Days */}
-          {renderCalendar()}
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
+              <span>ว่าง (&lt; 8)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-yellow-100 border border-yellow-200 rounded"></div>
+              <span>เกือบเต็ม (8-11)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
+              <span>เต็ม (≥12)</span>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="grid grid-cols-7 gap-1 text-center">
+            {/* Header */}
+            <div className="font-semibold py-2 text-sm text-gray-600">อา</div>
+            <div className="font-semibold py-2 text-sm text-gray-600">จ</div>
+            <div className="font-semibold py-2 text-sm text-gray-600">อ</div>
+            <div className="font-semibold py-2 text-sm text-gray-600">พ</div>
+            <div className="font-semibold py-2 text-sm text-gray-600">พฤ</div>
+            <div className="font-semibold py-2 text-sm text-gray-600">ศ</div>
+            <div className="font-semibold py-2 text-sm text-gray-600">ส</div>
+            
+            {/* Calendar Days */}
+            {renderCalendar()}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Appointment List Dialog */}
+      <Dialog open={showAppointmentList} onOpenChange={setShowAppointmentList}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>
+                รายการนัดหมายวันที่ {selectedDate && format(new Date(selectedDate), 'dd/MM/yyyy')}
+                {center && ` - ${center}`}
+              </span>
+              <button
+                onClick={() => setShowAppointmentList(false)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="max-h-96 overflow-y-auto">
+            {selectedDateAppointments.length > 0 ? (
+              <div className="space-y-3">
+                {selectedDateAppointments.map((appointment, index) => (
+                  <div key={index} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-lg">{appointment.full_name || 'ไม่ระบุชื่อ'}</h3>
+                      <span className="text-sm text-gray-500">
+                        {appointment.appointment_time || 'ไม่ระบุเวลา'}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p><span className="font-medium">HN:</span> {appointment.hn || 'ไม่ระบุ'}</p>
+                      <p><span className="font-medium">แผนก:</span> {appointment.departments?.join(', ') || 'ไม่ระบุ'}</p>
+                      <p><span className="font-medium">โต๊ะ:</span> {appointment.table_number ? `โต๊ะ ${appointment.table_number}` : 'เคสรวม'}</p>
+                      {appointment.phone_number && (
+                        <p><span className="font-medium">เบอร์โทร:</span> {appointment.phone_number}</p>
+                      )}
+                      {appointment.note && (
+                        <p><span className="font-medium">หมายเหตุ:</span> {appointment.note}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>ไม่มีนัดหมายในวันที่เลือก</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
