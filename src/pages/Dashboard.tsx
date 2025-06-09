@@ -1,109 +1,123 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Users, 
-  Calendar, 
-  MapPin, 
-  Plus,
-  TrendingUp,
-  Clock,
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
+import { Users, Calendar, MapPin, Plus, TrendingUp, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import DashboardChart from '@/components/DashboardChart';
-
 const Dashboard = () => {
-  const stats = [
-    {
-      title: 'นัดหมายวันนี้',
-      value: '24',
-      change: '+3 จากเมื่อวาน',
-      icon: Calendar,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      title: 'ผู้ป่วยทั้งหมด',
-      value: '1,247',
-      change: '+12 คนใหม่',
-      icon: Users,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
-    },
-    {
-      title: 'เยี่ยมบ้านวันนี้',
-      value: '8',
-      change: 'ตามแผน',
-      icon: MapPin,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100'
-    },
-    {
-      title: 'เสร็จสิ้นแล้ว',
-      value: '18',
-      change: '75% ของนัด',
-      icon: CheckCircle,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
-    }
-  ];
-
-  const todayAppointments = [
-    { time: '09:00', patient: 'สมชาย ใจดี', type: 'กายภาพ', table: 'โต๊ะ 1', status: 'waiting' },
-    { time: '09:30', patient: 'มาลี สุขใส', type: 'แผนไทย', table: 'โต๊ะ 2', status: 'processing' },
-    { time: '10:00', patient: 'วิชัย รุ่งเรือง', type: 'แผนจีน', table: 'โต๊ะ 3', status: 'done' },
-    { time: '10:30', patient: 'สุดา แสงใส', type: 'กายภาพ', table: 'โต๊ะ 1', status: 'waiting' }
-  ];
+  const stats = [{
+    title: 'นัดหมายวันนี้',
+    value: '24',
+    change: '+3 จากเมื่อวาน',
+    icon: Calendar,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100'
+  }, {
+    title: 'ผู้ป่วยทั้งหมด',
+    value: '1,247',
+    change: '+12 คนใหม่',
+    icon: Users,
+    color: 'text-green-600',
+    bgColor: 'bg-green-100'
+  }, {
+    title: 'เยี่ยมบ้านวันนี้',
+    value: '8',
+    change: 'ตามแผน',
+    icon: MapPin,
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100'
+  }, {
+    title: 'เสร็จสิ้นแล้ว',
+    value: '18',
+    change: '75% ของนัด',
+    icon: CheckCircle,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100'
+  }];
+  const todayAppointments = [{
+    time: '09:00',
+    patient: 'สมชาย ใจดี',
+    type: 'กายภาพ',
+    table: 'โต๊ะ 1',
+    status: 'waiting'
+  }, {
+    time: '09:30',
+    patient: 'มาลี สุขใส',
+    type: 'แผนไทย',
+    table: 'โต๊ะ 2',
+    status: 'processing'
+  }, {
+    time: '10:00',
+    patient: 'วิชัย รุ่งเรือง',
+    type: 'แผนจีน',
+    table: 'โต๊ะ 3',
+    status: 'done'
+  }, {
+    time: '10:30',
+    patient: 'สุดา แสงใส',
+    type: 'กายภาพ',
+    table: 'โต๊ะ 1',
+    status: 'waiting'
+  }];
 
   // PT Table data for PT users
-  const ptTableStats = [
-    { table: 'โต๊ะ 1', patients: 8, status: 'normal' },
-    { table: 'โต๊ะ 2', patients: 12, status: 'full' },
-    { table: 'โต๊ะ 3', patients: 6, status: 'normal' },
-  ];
-
+  const ptTableStats = [{
+    table: 'โต๊ะ 1',
+    patients: 8,
+    status: 'normal'
+  }, {
+    table: 'โต๊ะ 2',
+    patients: 12,
+    status: 'full'
+  }, {
+    table: 'โต๊ะ 3',
+    patients: 6,
+    status: 'normal'
+  }];
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'waiting': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'done': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'waiting':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'done':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'waiting': return 'รอ';
-      case 'processing': return 'กำลังรักษา';
-      case 'done': return 'เสร็จสิ้น';
-      default: return 'ไม่ทราบ';
+      case 'waiting':
+        return 'รอ';
+      case 'processing':
+        return 'กำลังรักษา';
+      case 'done':
+        return 'เสร็จสิ้น';
+      default:
+        return 'ไม่ทราบ';
     }
   };
 
   // Simulate PT user check (in real app, this would come from auth context)
   const isPTUser = true; // For demo purposes
 
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">แดashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">แดชบอร์ด</h1>
           <p className="text-gray-600">ภาพรวมระบบจัดการนัดหมายผู้ป่วย CareSync+</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.title} className="hover:shadow-lg transition-shadow">
+          {stats.map(stat => {
+          const Icon = stat.icon;
+          return <Card key={stat.title} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -122,9 +136,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            );
-          })}
+              </Card>;
+        })}
         </div>
 
         {/* Charts Section */}
@@ -183,8 +196,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {todayAppointments.map((appointment, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                {todayAppointments.map((appointment, index) => <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex items-center space-x-4">
                       <div className="text-sm font-medium text-gray-900 min-w-[60px]">
                         {appointment.time}
@@ -197,14 +209,11 @@ const Dashboard = () => {
                     <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
                       {getStatusText(appointment.status)}
                     </div>
-                  </div>
-                ))}
-                {todayAppointments.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  </div>)}
+                {todayAppointments.length === 0 && <div className="text-center py-8 text-gray-500">
                     <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p>ไม่มีนัดหมายวันนี้</p>
-                  </div>
-                )}
+                  </div>}
               </div>
             </CardContent>
           </Card>
@@ -235,31 +244,25 @@ const Dashboard = () => {
           </Card>
 
           {/* PT Table Status - Only visible for PT users */}
-          {isPTUser && (
-            <Card>
+          {isPTUser && <Card>
               <CardHeader>
                 <CardTitle>สถานะโต๊ะ PT</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {ptTableStats.map((table, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  {ptTableStats.map((table, index) => <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${
-                          table.status === 'full' ? 'bg-red-500' : 'bg-green-500'
-                        }`}></div>
+                        <div className={`w-3 h-3 rounded-full ${table.status === 'full' ? 'bg-red-500' : 'bg-green-500'}`}></div>
                         <span className="font-medium">{table.table}</span>
                       </div>
                       <div className="text-right">
                         <span className="font-semibold">{table.patients}/12</span>
                         <p className="text-xs text-gray-500">ผู้ป่วย</p>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </CardContent>
-            </Card>
-          )}
+            </Card>}
 
           <Card>
             <CardHeader>
@@ -286,8 +289,6 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
