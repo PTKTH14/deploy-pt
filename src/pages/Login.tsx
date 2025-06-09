@@ -18,10 +18,6 @@ const Login = () => {
   
   const { user, login } = useAuth();
 
-  if (user && !showStatusDialog) {
-    setShowStatusDialog(true);
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -40,8 +36,10 @@ const Login = () => {
 
   const handleStatusComplete = () => {
     setShowStatusDialog(false);
+    // หลังจากกรอกสถานะเสร็จแล้ว จะไปหน้าแดชบอร์ดอัตโนมัติ
   };
 
+  // ถ้า user login แล้วและไม่ได้แสดง status dialog ให้ไปหน้าแดชบอร์ด
   if (user && !showStatusDialog) {
     return <Navigate to="/" replace />;
   }

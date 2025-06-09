@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar, Clock, Plus, Search, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,8 +20,8 @@ const NewAppointmentForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [appointmentDate, setAppointmentDate] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(undefined);
   const [formData, setFormData] = useState({
     patient_id: '',
     full_name: '',
@@ -29,9 +30,9 @@ const NewAppointmentForm = () => {
     address: '',
     appointment_date: null,
     appointment_time: '',
-    departments: [],
+    departments: [] as string[],
     appointment_type: '',
-    center: '',
+    center: 'รพ.สต.ต้า', // ค่าเริ่มต้น
     time_period: '',
     status: 'new',
     table_number_display: '',
@@ -42,7 +43,7 @@ const NewAppointmentForm = () => {
   const { data: searchResults = [] } = useSearchPatients(searchTerm);
   const addAppointmentMutation = useAddAppointment();
 
-  const handlePatientSelect = (patient) => {
+  const handlePatientSelect = (patient: any) => {
     console.log('Selected patient:', patient);
     setSelectedPatient(patient);
     setFormData(prev => ({
@@ -56,7 +57,7 @@ const NewAppointmentForm = () => {
     setSearchTerm('');
   };
 
-  const handleDepartmentChange = (department, checked) => {
+  const handleDepartmentChange = (department: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
       departments: checked 
@@ -65,13 +66,23 @@ const NewAppointmentForm = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedPatient || !appointmentDate) {
       toast({
         title: "ข้อมูลไม่ครบถ้วน",
         description: "กรุณาเลือกผู้ป่วยและวันที่นัด",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ตรวจสอบว่าเลือกศูนย์บริการแล้วหรือไม่
+    if (!formData.center) {
+      toast({
+        title: "ข้อมูลไม่ครบถ้วน",
+        description: "กรุณาเลือกศูนย์บริการ",
         variant: "destructive",
       });
       return;
@@ -89,7 +100,7 @@ const NewAppointmentForm = () => {
         appointment_time: formData.appointment_time || null,
         departments: formData.departments.length > 0 ? formData.departments : null,
         appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' as const : 'out' as const,
-        center: formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล' | null,
+        center: formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล',
         time_period: formData.time_period as 'ในเวลาราชการ' | 'นอกเวลาราชการ' | null,
         table_number: formData.table_number_display === 'เคสรวม' ? null : 
                      formData.table_number_display ? Number(formData.table_number_display) : null,
@@ -196,7 +207,7 @@ const NewAppointmentForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Date Picker */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">วันที่นัด</label>
+                  <label className="block text-sm font-medium mb-2">วันที่นัด *</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -248,7 +259,7 @@ const NewAppointmentForm = () => {
 
                 {/* Center */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">ศูนย์บริการ</label>
+                  <label className="block text-sm font-medium mb-2">ศูนย์บริการ *</label>
                   <Select value={formData.center} onValueChange={(value) => setFormData(prev => ({ ...prev, center: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="เลือกศูนย์บริการ" />
@@ -301,7 +312,7 @@ const NewAppointmentForm = () => {
                       <Checkbox
                         id={dept}
                         checked={formData.departments.includes(dept)}
-                        onCheckedChange={(checked) => handleDepartmentChange(dept, checked)}
+                        onCheckedChange={(checked) => handleDepartmentChange(dept, checked as boolean)}
                       />
                       <label htmlFor={dept} className="text-sm">{dept}</label>
                     </div>
