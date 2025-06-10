@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar, Clock, Plus, Search, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ const NewAppointmentForm = () => {
     appointment_time: '',
     departments: [] as string[],
     appointment_type: '',
-    center: 'รพ.สต.ต้า',
+    center: '', // Changed to empty string instead of default value
     time_period: '',
     status: 'new',
     table_number_display: '',
@@ -101,30 +102,21 @@ const NewAppointmentForm = () => {
       return;
     }
 
-    if (!formData.center) {
-      toast({
-        title: "ข้อมูลไม่ครบถ้วน",
-        description: "กรุณาเลือกศูนย์บริการ",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const appointmentData = {
-        patient_id: formData.patient_id || null,
+        patient_id: formData.patient_id || `temp_${Date.now()}`, // Generate temporary ID if manual entry
         full_name: formData.full_name,
         hn: formData.hn,
-        phone_number: formData.phone_number,
-        address: formData.address,
+        phone_number: formData.phone_number || '',
+        address: formData.address || '',
         appointment_date: format(appointmentDate, 'yyyy-MM-dd'),
         appointment_time: formData.appointment_time || null,
-        departments: formData.departments.length > 0 ? formData.departments : null,
+        departments: formData.departments.length > 0 ? formData.departments : ['กายภาพบำบัด'], // Default department if none selected
         appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' as const : 'out' as const,
-        center: formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล',
-        time_period: formData.time_period as 'ในเวลาราชการ' | 'นอกเวลาราชการ' | null,
+        center: formData.center ? formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล' : 'รพ.สต.ต้า', // Default center if none selected
+        time_period: formData.time_period ? formData.time_period as 'ในเวลาราชการ' | 'นอกเวลาราชการ' : 'ในเวลาราชการ', // Default time period
         table_number: formData.table_number_display === 'เคสรวม' ? null : 
-                     formData.table_number_display ? Number(formData.table_number_display) : null,
+                     formData.table_number_display ? Number(formData.table_number_display) : 1, // Default table number
         status: 'new' as const,
         note: formData.note || null
       };
@@ -329,7 +321,7 @@ const NewAppointmentForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">ศูนย์บริการ *</label>
+                  <label className="block text-sm font-medium mb-2">ศูนย์บริการ</label>
                   <Select value={formData.center} onValueChange={(value) => setFormData(prev => ({ ...prev, center: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="เลือกศูนย์บริการ" />
