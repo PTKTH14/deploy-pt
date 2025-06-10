@@ -28,10 +28,10 @@ const AppointmentForm = () => {
     gender: '',
     appointment_date: '',
     appointment_time: '',
-    appointment_type: '',
-    departments: [],
-    center: '', // No default value
-    table_number: null,
+    appointment_type: 'in' as 'in' | 'out',
+    departments: [] as string[],
+    center: '',
+    table_number: null as number | null,
     notes: '',
     status: 'new'
   });
@@ -80,20 +80,20 @@ const AppointmentForm = () => {
         return;
       }
 
-      // Prepare data for submission
+      // Prepare data for submission with proper types
       const appointmentData = {
         full_name: formData.full_name.trim(),
         hn: formData.hn.trim(),
-        phone: formData.phone?.trim() || null,
-        age: formData.age ? parseInt(formData.age) : null,
-        gender: formData.gender || null,
+        phone: formData.phone?.trim() || undefined,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        gender: formData.gender || undefined,
         appointment_date: formData.appointment_date,
-        appointment_time: formData.appointment_time || null,
-        appointment_type: formData.appointment_type || 'in',
+        appointment_time: formData.appointment_time || undefined,
+        appointment_type: formData.appointment_type,
         departments: formData.departments,
-        center: formData.center || null, // Allow null/empty center
-        table_number: formData.table_number,
-        notes: formData.notes?.trim() || null,
+        center: formData.center || undefined,
+        table_number: formData.table_number || undefined,
+        notes: formData.notes?.trim() || undefined,
         status: formData.status
       };
 
@@ -115,6 +115,10 @@ const AppointmentForm = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleNewPatientChange = (checked: boolean | "indeterminate") => {
+    setIsNewPatient(checked === true);
   };
 
   return (
@@ -148,7 +152,7 @@ const AppointmentForm = () => {
                 <Checkbox 
                   id="new-patient" 
                   checked={isNewPatient}
-                  onCheckedChange={setIsNewPatient}
+                  onCheckedChange={handleNewPatientChange}
                 />
                 <Label htmlFor="new-patient">ผู้ป่วยใหม่</Label>
               </div>
@@ -253,7 +257,7 @@ const AppointmentForm = () => {
                   <Label htmlFor="appointment-type">ประเภทการนัด *</Label>
                   <Select 
                     value={formData.appointment_type} 
-                    onValueChange={(value) => handleInputChange('appointment_type', value)}
+                    onValueChange={(value: 'in' | 'out') => handleInputChange('appointment_type', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="เลือกประเภทการนัด" />
@@ -296,7 +300,7 @@ const AppointmentForm = () => {
                       <Checkbox
                         id={dept.id}
                         checked={formData.departments.includes(dept.id)}
-                        onCheckedChange={(checked) => handleDepartmentChange(dept.id, checked)}
+                        onCheckedChange={(checked) => handleDepartmentChange(dept.id, checked === true)}
                       />
                       <Label htmlFor={dept.id}>{dept.label}</Label>
                     </div>
