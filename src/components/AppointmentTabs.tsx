@@ -44,7 +44,8 @@ const AppointmentTabs = ({
   useEffect(() => {
     const initialRescheduleData = {};
     appointmentData.forEach(appointment => {
-      initialRescheduleData[appointment.appointment_id] = {
+      const appointmentId = appointment.patient_id || `temp-${Math.random()}`;
+      initialRescheduleData[appointmentId] = {
         date: null,
         time: ''
       };
@@ -146,21 +147,24 @@ const AppointmentTabs = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           {currentAppointments.length > 0 ? (
-            currentAppointments.map((appointment, index) => (
-              <AppointmentCard
-                key={appointment.appointment_id || index}
-                appointment={appointment}
-                index={index}
-                appointmentStatuses={appointmentStatuses}
-                rescheduleData={rescheduleData}
-                showReschedule={showReschedule}
-                onStatusChange={handleStatusChange}
-                onRescheduleDataUpdate={updateRescheduleData}
-                onReschedule={handleReschedule}
-                onShowReschedule={setShowReschedule}
-                department={department}
-              />
-            ))
+            currentAppointments.map((appointment, index) => {
+              const appointmentId = appointment.patient_id || `temp-${index}`;
+              return (
+                <AppointmentCard
+                  key={appointmentId}
+                  appointment={{...appointment, appointment_id: appointmentId}}
+                  index={index}
+                  appointmentStatuses={appointmentStatuses}
+                  rescheduleData={rescheduleData}
+                  showReschedule={showReschedule}
+                  onStatusChange={handleStatusChange}
+                  onRescheduleDataUpdate={updateRescheduleData}
+                  onReschedule={handleReschedule}
+                  onShowReschedule={setShowReschedule}
+                  department={department}
+                />
+              );
+            })
           ) : (
             <Card className="p-8 text-center text-gray-500">
               <p>ไม่มีนัดหมายที่ตรงกับเงื่อนไขการค้นหา</p>

@@ -30,7 +30,7 @@ const AppointmentForm = () => {
     appointment_time: '',
     appointment_type: 'in' as 'in' | 'out',
     departments: [] as string[],
-    center: '',
+    center: '' as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล' | '',
     table_number: null as number | null,
     notes: '',
     status: 'new'
@@ -84,17 +84,16 @@ const AppointmentForm = () => {
       const appointmentData = {
         full_name: formData.full_name.trim(),
         hn: formData.hn.trim(),
-        phone: formData.phone?.trim() || undefined,
+        phone_number: formData.phone?.trim() || undefined,
         age: formData.age ? parseInt(formData.age) : undefined,
-        gender: formData.gender || undefined,
         appointment_date: formData.appointment_date,
         appointment_time: formData.appointment_time || undefined,
         appointment_type: formData.appointment_type,
         departments: formData.departments,
         center: formData.center || undefined,
         table_number: formData.table_number || undefined,
-        notes: formData.notes?.trim() || undefined,
-        status: formData.status
+        note: formData.notes?.trim() || undefined,
+        status: formData.status as 'new' | 'confirmed' | 'cancelled' | 'completed'
       };
 
       console.log('Final appointment data:', appointmentData);
@@ -273,7 +272,7 @@ const AppointmentForm = () => {
                   <Label htmlFor="center">ศูนย์บริการ</Label>
                   <Select 
                     value={formData.center} 
-                    onValueChange={(value) => handleInputChange('center', value)}
+                    onValueChange={(value: 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล') => handleInputChange('center', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="เลือกศูนย์บริการ" />
