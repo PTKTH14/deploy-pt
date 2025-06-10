@@ -33,7 +33,7 @@ const NewAppointmentForm = () => {
     appointment_time: '',
     departments: [] as string[],
     appointment_type: '',
-    center: '', // Changed to empty string instead of default value
+    center: '', // Empty by default
     time_period: '',
     status: 'new',
     table_number_display: '',
@@ -84,6 +84,7 @@ const NewAppointmentForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Basic validation
     if ((!selectedPatient && !manualEntry) || !appointmentDate) {
       toast({
         title: "ข้อมูลไม่ครบถ้วน",
@@ -104,19 +105,20 @@ const NewAppointmentForm = () => {
 
     try {
       const appointmentData = {
-        patient_id: formData.patient_id || `temp_${Date.now()}`, // Generate temporary ID if manual entry
+        patient_id: formData.patient_id || `temp_${Date.now()}`,
         full_name: formData.full_name,
         hn: formData.hn,
         phone_number: formData.phone_number || '',
         address: formData.address || '',
         appointment_date: format(appointmentDate, 'yyyy-MM-dd'),
         appointment_time: formData.appointment_time || null,
-        departments: formData.departments.length > 0 ? formData.departments : ['กายภาพบำบัด'], // Default department if none selected
-        appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' as const : 'out' as const,
-        center: formData.center ? formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล' : 'รพ.สต.ต้า', // Default center if none selected
-        time_period: formData.time_period ? formData.time_period as 'ในเวลาราชการ' | 'นอกเวลาราชการ' : 'ในเวลาราชการ', // Default time period
+        departments: formData.departments.length > 0 ? formData.departments : ['กายภาพบำบัด'],
+        appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' as const : 
+                         formData.appointment_type === 'นัดเยี่ยมนอก รพ.' ? 'out' as const : 'in' as const,
+        center: formData.center ? formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล' : null,
+        time_period: formData.time_period ? formData.time_period as 'ในเวลาราชการ' | 'นอกเวลาราชการ' : 'ในเวลาราชการ',
         table_number: formData.table_number_display === 'เคสรวม' ? null : 
-                     formData.table_number_display ? Number(formData.table_number_display) : 1, // Default table number
+                     formData.table_number_display ? Number(formData.table_number_display) : 1,
         status: 'new' as const,
         note: formData.note || null
       };

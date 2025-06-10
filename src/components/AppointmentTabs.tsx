@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAppointments } from '@/hooks/useAppointments';
 
 interface AppointmentTabsProps {
   department?: string;
@@ -31,145 +32,64 @@ const AppointmentTabs = ({
   const [selectedAppointmentType, setSelectedAppointmentType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
+  // Use real appointment data with filters
+  const { data: appointmentData = [], isLoading, error } = useAppointments({
+    department: department,
+    date: selectedDate || undefined
+  });
+
+  console.log('AppointmentTabs - Raw data:', appointmentData);
+  console.log('AppointmentTabs - Department:', department);
+
   // Check if department should show table tabs
   const shouldShowTables = department === 'กายภาพ' || department === 'แผนจีน';
 
-  // Mock data based on department
-  const getAppointmentData = () => {
-    const baseData = {
-      กายภาพ: {
-        table1: [{
-          id: '1',
-          name: 'นงนุช คงอาศรี',
-          time: 'วันนี้ 10:00',
-          hn: 'HN 100094',
-          location: 'รพ.สต.ภความิด',
-          status: 'confirmed',
-          appointmentType: 'นวดบำบัด',
-          department: 'กายภาพ'
-        }],
-        table2: [],
-        table3: [{
-          id: '2',
-          name: 'วิทวส นาคร่',
-          time: 'วันนี้ 10:00',
-          hn: 'HN 100599',
-          location: 'รพ.สาพบามิด',
-          status: 'pending',
-          appointmentType: 'ฟื้นฟูสมรรถภาพ',
-          department: 'กายภาพ'
-        }],
-        summary: [{
-          id: '3',
-          name: 'สมชาย ใจดี',
-          time: 'วันนี้ 14:00',
-          hn: 'HN 100123',
-          location: 'เคสรวม',
-          status: 'confirmed',
-          appointmentType: 'เคสรวม',
-          department: 'เคสรวม'
-        }]
-      },
-      แผนจีน: {
-        table1: [{
-          id: '4',
-          name: 'สมปอง ใจงาม',
-          time: 'วันนี้ 09:00',
-          hn: 'HN 100200',
-          location: 'คลินิกแผนจีน โต๊ะ 1',
-          status: 'confirmed',
-          appointmentType: 'ฝังเข็ม',
-          department: 'แผนจีน'
-        }],
-        table2: [{
-          id: '5',
-          name: 'วิไลวรรณ สุขสม',
-          time: 'วันนี้ 11:00',
-          hn: 'HN 100201',
-          location: 'คลินิกแผนจีน โต๊ะ 2',
-          status: 'pending',
-          appointmentType: 'สมุนไพรจีน',
-          department: 'แผนจีน'
-        }],
-        all: [{
-          id: '4',
-          name: 'สมปอง ใจงาม',
-          time: 'วันนี้ 09:00',
-          hn: 'HN 100200',
-          location: 'คลินิกแผนจีน',
-          status: 'confirmed',
-          appointmentType: 'ฝังเข็ม',
-          department: 'แผนจีน'
-        }]
-      },
-      แผนไทย: {
-        all: [{
-          id: '6',
-          name: 'ประสบ ดีใจ',
-          time: 'วันนี้ 13:00',
-          hn: 'HN 100300',
-          location: 'คลินิกแผนไทย',
-          status: 'confirmed',
-          appointmentType: 'นวดไทย',
-          department: 'แผนไทย'
-        }]
-      },
-      เคสร่วม: {
-        all: [{
-          id: '7',
-          name: 'นางมีดา อารีย์',
-          date: '5/6/2568',
-          time: '14:00 น.',
-          type: 'นวดโรคขยาบขน',
-          status: 'แผนไทย',
-          location: 'ภาคารคิด',
-          hn: 'HN 100400',
-          table: 'โต๊ะ: 1',
-          appointmentType: 'เคสรวม',
-          department: 'เคสรวม'
-        }]
-      },
-      นอกเวลา: {
-        all: [{
-          id: '8',
-          name: 'สมศรี ดีใจ',
-          time: 'วันนี้ 18:00',
-          hn: 'HN 100500',
-          location: 'นอกเวลา',
-          status: 'confirmed',
-          appointmentType: 'นอกเวลา',
-          department: 'นอกเวลา'
-        }]
-      }
-    };
-    return baseData[department] || baseData.กายภาพ;
-  };
-
-  const appointmentData = getAppointmentData();
-
-  // Filter appointments based on search criteria
-  const filterAppointments = (appointments) => {
+  // Filter appointments based on search criteria and table
+  const filterAppointments = (appointments: any[], tableFilter?: string) => {
     if (!appointments) return [];
     
-    return appointments.filter(appointment => {
-      const matchesName = !searchName || appointment.name.toLowerCase().includes(searchName.toLowerCase());
-      const matchesDate = !selectedDate || appointment.time.includes(selectedDate);
-      const matchesDepartment = selectedDepartment === 'all' || appointment.department === selectedDepartment;
-      const matchesAppointmentType = selectedAppointmentType === 'all' || appointment.appointmentType === selectedAppointmentType;
+    let filteredAppointments = [...appointments];
+
+    // Filter by table for departments that have tables
+    if (shouldShowTables && tableFilter) {
+      if (tableFilter === 'summary') {
+        // For summary tab, show appointments that belong to multiple departments (joint cases)
+        filteredAppointments = filteredAppointments.filter(appointment => 
+          appointment.departments && appointment.departments.length > 1
+        );
+      } else {
+        // For specific table tabs, filter by table number
+        const tableNumber = tableFilter.replace('table', '');
+        filteredAppointments = filteredAppointments.filter(appointment => 
+          appointment.table_number === parseInt(tableNumber)
+        );
+      }
+    }
+
+    // Apply other filters
+    return filteredAppointments.filter(appointment => {
+      const matchesName = !searchName || appointment.full_name?.toLowerCase().includes(searchName.toLowerCase());
+      const matchesDate = !selectedDate || appointment.appointment_date === selectedDate;
+      const matchesDepartment = selectedDepartment === 'all' || 
+        (appointment.departments && appointment.departments.some((dept: string) => 
+          dept.includes(selectedDepartment) || selectedDepartment.includes(dept)
+        ));
+      const matchesAppointmentType = selectedAppointmentType === 'all' || 
+        appointment.appointment_type === selectedAppointmentType;
       const matchesStatus = selectedStatus === 'all' || appointment.status === selectedStatus;
       
       return matchesName && matchesDate && matchesDepartment && matchesAppointmentType && matchesStatus;
     });
   };
 
-  const handleStatusChange = (appointmentId, status) => {
+  const handleStatusChange = (appointmentId: string, status: string) => {
     setAppointmentStatuses(prev => ({
       ...prev,
       [appointmentId]: status
     }));
   };
 
-  const handleReschedule = appointmentId => {
+  const handleReschedule = (appointmentId: string) => {
     if (rescheduleDate && rescheduleTime) {
       handleStatusChange(appointmentId, 'rescheduled');
       setShowReschedule(null);
@@ -179,7 +99,7 @@ const AppointmentTabs = ({
     }
   };
 
-  const getCardStyle = appointmentId => {
+  const getCardStyle = (appointmentId: string) => {
     const status = appointmentStatuses[appointmentId];
     switch (status) {
       case 'attended':
@@ -188,31 +108,43 @@ const AppointmentTabs = ({
         return 'border-l-yellow-500 bg-yellow-50';
       case 'cancelled':
         return 'border-l-red-500 bg-red-50';
+      case 'missed':
+        return 'border-l-red-500 bg-red-50';
       default:
         return 'border-l-blue-400';
     }
   };
 
-  const renderJointCaseCard = (appointment, index) => (
-    <Card key={index} className={cn("mb-4 border transition-all duration-200", getCardStyle(appointment.id))}>
+  const renderJointCaseCard = (appointment: any, index: number) => (
+    <Card key={appointment.id || index} className={cn("mb-4 border transition-all duration-200", getCardStyle(appointment.id))}>
       <CardContent className="p-4">
         {/* Header with badges */}
         <div className="flex justify-between items-start mb-3">
-          <h3 className="font-semibold text-lg">{appointment.name}</h3>
+          <h3 className="font-semibold text-lg">{appointment.full_name}</h3>
           <div className="flex gap-2">
-            <Badge variant="secondary" className="bg-pink-100 text-pink-800">แผนไทย</Badge>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">แผนจีน</Badge>
-            <Badge variant="secondary" className="bg-green-100 text-green-800">กายภาพ</Badge>
-            <Badge variant="outline">{appointment.table}</Badge>
+            {appointment.departments?.map((dept: string) => (
+              <Badge key={dept} variant="secondary" className={
+                dept === 'แผนไทย' ? "bg-pink-100 text-pink-800" :
+                dept === 'แผนจีน' ? "bg-blue-100 text-blue-800" :
+                dept === 'กายภาพบำบัด' ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+              }>
+                {dept}
+              </Badge>
+            ))}
+            {appointment.table_number && (
+              <Badge variant="outline">โต๊ะ: {appointment.table_number}</Badge>
+            )}
           </div>
         </div>
 
         {/* Patient details */}
         <div className="text-sm text-gray-600 mb-4">
-          <p>วันที่: {appointment.date} | เวลา: {appointment.time} | ประเภท: {appointment.type} | สถานะ: {appointment.status}</p>
+          <p>วันที่: {appointment.appointment_date} | เวลา: {appointment.appointment_time || 'ไม่ระบุ'} | 
+             สถานะ: {appointment.status === 'new' ? 'ใหม่' : appointment.status}</p>
+          <p>HN: {appointment.hn} | ศูนย์: {appointment.center || 'ไม่ระบุ'}</p>
         </div>
 
-        {/* Action buttons with new styles */}
+        {/* Action buttons */}
         <div className="flex gap-2 flex-wrap">
           <Button 
             size="sm" 
@@ -272,18 +204,21 @@ const AppointmentTabs = ({
     </Card>
   );
 
-  const renderAppointmentCard = (appointment, index) => {
+  const renderAppointmentCard = (appointment: any, index: number) => {
     // Use special card for joint cases
     if (department === 'เคสร่วม') {
       return renderJointCaseCard(appointment, index);
     }
 
     return (
-      <Card key={index} className={cn("mb-4 border-l-4 transition-all duration-200", getCardStyle(appointment.id))}>
+      <Card key={appointment.id || index} className={cn("mb-4 border-l-4 transition-all duration-200", getCardStyle(appointment.id))}>
         <CardContent className="p-4">
-          <h3 className="font-semibold text-lg mb-1">{appointment.name}</h3>
-          <p className="text-gray-600 mb-1">{appointment.time}</p>
-          <p className="text-gray-500 text-sm mb-3">{appointment.hn} / {appointment.location}</p>
+          <h3 className="font-semibold text-lg mb-1">{appointment.full_name}</h3>
+          <p className="text-gray-600 mb-1">{appointment.appointment_date} {appointment.appointment_time && `เวลา ${appointment.appointment_time}`}</p>
+          <p className="text-gray-500 text-sm mb-3">
+            {appointment.hn} / {appointment.center || 'ไม่ระบุศูนย์'} 
+            {appointment.table_number && ` / โต๊ะ ${appointment.table_number}`}
+          </p>
           
           <div className="flex gap-2 flex-wrap">
             <Button 
@@ -379,15 +314,29 @@ const AppointmentTabs = ({
   // Get current appointments to display
   const getCurrentAppointments = () => {
     if (shouldShowTables) {
-      const appointments = appointmentData[activeTable as keyof typeof appointmentData] || [];
-      return filterAppointments(appointments);
+      return filterAppointments(appointmentData, activeTable);
     } else {
-      const appointments = appointmentData.all || [];
-      return filterAppointments(appointments);
+      return filterAppointments(appointmentData);
     }
   };
 
   const currentAppointments = getCurrentAppointments();
+
+  if (isLoading) {
+    return (
+      <Card className="p-8 text-center">
+        <p>กำลังโหลดข้อมูล...</p>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-8 text-center text-red-500">
+        <p>เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -430,11 +379,8 @@ const AppointmentTabs = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">ทุกประเภท</SelectItem>
-              <SelectItem value="นวดบำบัด">นวดบำบัด</SelectItem>
-              <SelectItem value="ฟื้นฟูสมรรถภาพ">ฟื้นฟูสมรรถภาพ</SelectItem>
-              <SelectItem value="ฝังเข็ม">ฝังเข็ม</SelectItem>
-              <SelectItem value="สมุนไพรจีน">สมุนไพรจีน</SelectItem>
-              <SelectItem value="นวดไทย">นวดไทย</SelectItem>
+              <SelectItem value="in">นัดใน รพ.</SelectItem>
+              <SelectItem value="out">นัดเยี่ยมนอก รพ.</SelectItem>
             </SelectContent>
           </Select>
           
@@ -444,8 +390,8 @@ const AppointmentTabs = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">ทุกสถานะ</SelectItem>
+              <SelectItem value="new">ใหม่</SelectItem>
               <SelectItem value="confirmed">ยืนยันแล้ว</SelectItem>
-              <SelectItem value="pending">รอดำเนินการ</SelectItem>
               <SelectItem value="cancelled">ยกเลิก</SelectItem>
             </SelectContent>
           </Select>
@@ -479,6 +425,9 @@ const AppointmentTabs = ({
           ) : (
             <Card className="p-8 text-center text-gray-500">
               <p>ไม่มีนัดหมายที่ตรงกับเงื่อนไขการค้นหา</p>
+              {appointmentData.length === 0 && (
+                <p className="text-sm mt-2">ยังไม่มีข้อมูลนัดหมายในระบบ</p>
+              )}
             </Card>
           )}
         </div>
