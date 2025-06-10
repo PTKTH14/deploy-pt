@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +21,16 @@ const AppointmentTabs = ({
 }: AppointmentTabsProps) => {
   const [activeTable, setActiveTable] = useState('table1');
   const [appointmentStatuses, setAppointmentStatuses] = useState({});
-  const [rescheduleDate, setRescheduleDate] = useState(null);
-  const [rescheduleTime, setRescheduleTime] = useState('');
+  const [rescheduleData, setRescheduleData] = useState({});
   const [showReschedule, setShowReschedule] = useState(null);
   
   // Filter states
   const [searchName, setSearchName] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Set current date as default
+    const today = new Date();
+    return format(today, 'yyyy-MM-dd');
+  });
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedAppointmentType, setSelectedAppointmentType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -40,6 +43,18 @@ const AppointmentTabs = ({
 
   console.log('AppointmentTabs - Raw data:', appointmentData);
   console.log('AppointmentTabs - Department:', department);
+
+  // Initialize reschedule data for each appointment
+  useEffect(() => {
+    const initialRescheduleData = {};
+    appointmentData.forEach(appointment => {
+      initialRescheduleData[appointment.id] = {
+        date: null,
+        time: ''
+      };
+    });
+    setRescheduleData(initialRescheduleData);
+  }, [appointmentData]);
 
   // Check if department should show table tabs
   const shouldShowTables = department === 'กายภาพ' || department === 'แผนจีน';
@@ -89,13 +104,26 @@ const AppointmentTabs = ({
     }));
   };
 
+  const updateRescheduleData = (appointmentId: string, field: string, value: any) => {
+    setRescheduleData(prev => ({
+      ...prev,
+      [appointmentId]: {
+        ...prev[appointmentId],
+        [field]: value
+      }
+    }));
+  };
+
   const handleReschedule = (appointmentId: string) => {
-    if (rescheduleDate && rescheduleTime) {
+    const rescheduleInfo = rescheduleData[appointmentId];
+    if (rescheduleInfo && rescheduleInfo.date && rescheduleInfo.time) {
       handleStatusChange(appointmentId, 'rescheduled');
       setShowReschedule(null);
-      setRescheduleDate(null);
-      setRescheduleTime('');
-      console.log(`Rescheduled appointment ${appointmentId} to ${format(rescheduleDate, 'dd/MM/yyyy')} at ${rescheduleTime}`);
+      console.log(`Rescheduled appointment ${appointmentId} to ${format(rescheduleInfo.date, 'dd/MM/yyyy')} at ${rescheduleInfo.time}`);
+      
+      // Reset reschedule data for this appointment
+      updateRescheduleData(appointmentId, 'date', null);
+      updateRescheduleData(appointmentId, 'time', '');
     }
   };
 
@@ -210,6 +238,8 @@ const AppointmentTabs = ({
       return renderJointCaseCard(appointment, index);
     }
 
+    const currentRescheduleData = rescheduleData[appointment.id] || { date: null, time: '' };
+
     return (
       <Card key={appointment.id || index} className={cn("mb-4 border-l-4 transition-all duration-200", getCardStyle(appointment.id))}>
         <CardContent className="p-4">
@@ -248,27 +278,46 @@ const AppointmentTabs = ({
                     <label className="block text-sm font-medium mb-2">วันที่ใหม่</label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !rescheduleDate && "text-muted-foreground")}>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !currentRescheduleData.date && "text-muted-foreground")}>
                           <Calendar className="mr-2 h-4 w-4" />
-                          {rescheduleDate ? format(rescheduleDate, "dd/MM/yyyy") : "เลือกวันที่"}
+                          {currentRescheduleData.date ? format(currentRescheduleData.date, "dd/MM/yyyy") : "เลือกวันที่"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
-                        <CalendarComponent mode="single" selected={rescheduleDate} onSelect={setRescheduleDate} initialFocus className="pointer-events-auto" />
+                        <CalendarComponent 
+                          mode="single" 
+                          selected={currentRescheduleData.date} 
+                          onSelect={(date) => updateRescheduleData(appointment.id, 'date', date)} 
+                          initialFocus 
+                          className="pointer-events-auto" 
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium mb-2">เวลาใหม่</label>
-                    <Input type="time" value={rescheduleTime} onChange={e => setRescheduleTime(e.target.value)} />
+                    <Input 
+                      type="time" 
+                      value={currentRescheduleData.time} 
+                      onChange={e => updateRescheduleData(appointment.id, 'time', e.target.value)} 
+                    />
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleReschedule(appointment.id)} disabled={!rescheduleDate || !rescheduleTime} className="bg-yellow-600 hover:bg-yellow-700">
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleReschedule(appointment.id)} 
+                      disabled={!currentRescheduleData.date || !currentRescheduleData.time} 
+                      className="bg-yellow-600 hover:bg-yellow-700"
+                    >
                       ยืนยันการเลื่อน
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowReschedule(null)}>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setShowReschedule(null)}
+                    >
                       ยกเลิก
                     </Button>
                   </div>

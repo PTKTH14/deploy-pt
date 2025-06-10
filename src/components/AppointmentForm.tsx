@@ -1,74 +1,48 @@
 
 import React, { useState } from 'react';
-import { Calendar, Clock, Plus, Search, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Calendar, CalendarCheck, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useSearchPatients } from '@/hooks/usePatients';
 import { useAddAppointment } from '@/hooks/useAppointments';
 import { useToast } from '@/hooks/use-toast';
+import Navbar from './Navbar';
 
-const NewAppointmentForm = () => {
+const AppointmentForm = () => {
   const navigate = useNavigate();
+  const addAppointment = useAddAppointment();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
-  const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(undefined);
-  const [manualEntry, setManualEntry] = useState(false);
+
+  // Form state
   const [formData, setFormData] = useState({
-    patient_id: '',
     full_name: '',
     hn: '',
-    phone_number: '',
-    address: '',
-    appointment_date: null,
+    phone: '',
+    age: '',
+    gender: '',
+    appointment_date: '',
     appointment_time: '',
-    departments: [] as string[],
     appointment_type: '',
-    center: '', // Empty by default
-    time_period: '',
-    status: 'new',
-    table_number_display: '',
-    note: ''
+    departments: [],
+    center: '', // No default value
+    table_number: null,
+    notes: '',
+    status: 'new'
   });
 
-  const { data: searchResults = [] } = useSearchPatients(searchTerm);
-  const addAppointmentMutation = useAddAppointment();
+  const [isNewPatient, setIsNewPatient] = useState(false);
 
-  const handlePatientSelect = (patient: any) => {
-    console.log('Selected patient:', patient);
-    setSelectedPatient(patient);
+  const handleInputChange = (field: string, value: any) => {
+    console.log(`Updating ${field} with value:`, value);
     setFormData(prev => ({
       ...prev,
-      patient_id: patient.id,
-      full_name: patient.full_name || '',
-      hn: patient.hn || '',
-      phone_number: patient.phone_number || '',
-      address: patient.full_address || ''
-    }));
-    setSearchTerm('');
-    setManualEntry(false);
-  };
-
-  const handleManualEntry = () => {
-    setManualEntry(true);
-    setSelectedPatient(null);
-    setSearchTerm('');
-    setFormData(prev => ({
-      ...prev,
-      patient_id: '',
-      full_name: '',
-      hn: '',
-      phone_number: '',
-      address: ''
+      [field]: value
     }));
   };
 
@@ -84,57 +58,57 @@ const NewAppointmentForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
-    if ((!selectedPatient && !manualEntry) || !appointmentDate) {
-      toast({
-        title: "ข้อมูลไม่ครบถ้วน",
-        description: "กรุณาเลือกผู้ป่วยหรือกรอกข้อมูลและวันที่นัด",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (manualEntry && (!formData.full_name || !formData.hn)) {
-      toast({
-        title: "ข้อมูลไม่ครบถ้วน",
-        description: "กรุณากรอกชื่อและ HN",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
+      console.log('Submitting form data:', formData);
+      
+      // Basic validation
+      if (!formData.full_name || !formData.hn || !formData.appointment_date) {
+        toast({
+          title: "ข้อมูลไม่ครบถ้วน",
+          description: "กรุณากรอกข้อมูลที่จำเป็น (ชื่อ-นามสกุล, HN, วันที่นัด)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (formData.departments.length === 0) {
+        toast({
+          title: "ข้อมูลไม่ครบถ้วน", 
+          description: "กรุณาเลือกแผนกอย่างน้อย 1 แผนก",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prepare data for submission
       const appointmentData = {
-        patient_id: formData.patient_id || `temp_${Date.now()}`,
-        full_name: formData.full_name,
-        hn: formData.hn,
-        phone_number: formData.phone_number || '',
-        address: formData.address || '',
-        appointment_date: format(appointmentDate, 'yyyy-MM-dd'),
+        full_name: formData.full_name.trim(),
+        hn: formData.hn.trim(),
+        phone: formData.phone?.trim() || null,
+        age: formData.age ? parseInt(formData.age) : null,
+        gender: formData.gender || null,
+        appointment_date: formData.appointment_date,
         appointment_time: formData.appointment_time || null,
-        departments: formData.departments.length > 0 ? formData.departments : ['กายภาพบำบัด'],
-        appointment_type: formData.appointment_type === 'นัดใน รพ.' ? 'in' as const : 
-                         formData.appointment_type === 'นัดเยี่ยมนอก รพ.' ? 'out' as const : 'in' as const,
-        center: formData.center ? formData.center as 'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล' : null,
-        time_period: formData.time_period ? formData.time_period as 'ในเวลาราชการ' | 'นอกเวลาราชการ' : 'ในเวลาราชการ',
-        table_number: formData.table_number_display === 'เคสรวม' ? null : 
-                     formData.table_number_display ? Number(formData.table_number_display) : 1,
-        status: 'new' as const,
-        note: formData.note || null
+        appointment_type: formData.appointment_type || 'in',
+        departments: formData.departments,
+        center: formData.center || null, // Allow null/empty center
+        table_number: formData.table_number,
+        notes: formData.notes?.trim() || null,
+        status: formData.status
       };
 
-      console.log('Submitting appointment:', appointmentData);
-      
-      await addAppointmentMutation.mutateAsync(appointmentData);
+      console.log('Final appointment data:', appointmentData);
+
+      await addAppointment.mutateAsync(appointmentData);
       
       toast({
-        title: "บันทึกนัดหมายสำเร็จ",
-        description: `สร้างนัดหมายสำหรับ ${formData.full_name} เรียบร้อยแล้ว`,
+        title: "บันทึกสำเร็จ",
+        description: "นัดหมายได้ถูกบันทึกเรียบร้อยแล้ว",
       });
       
       navigate('/appointments');
     } catch (error) {
-      console.error('Error saving appointment:', error);
+      console.error('Error submitting appointment:', error);
       toast({
         title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถบันทึกนัดหมายได้ กรุณาลองใหม่อีกครั้ง",
@@ -144,187 +118,159 @@ const NewAppointmentForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-4 mb-6">
           <Button 
-            variant="ghost" 
+            variant="outline" 
             onClick={() => navigate('/appointments')}
-            className="mr-4"
+            className="flex items-center gap-2"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4" />
             กลับ
           </Button>
           <h1 className="text-2xl font-bold">เพิ่มนัดหมายผู้ป่วยใหม่</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Patient Information */}
           <Card>
             <CardHeader>
-              <CardTitle>ข้อมูลผู้ป่วย</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                ข้อมูลผู้ป่วย
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4 mb-4">
-                <Button
-                  type="button"
-                  variant={!manualEntry ? "default" : "outline"}
-                  onClick={() => setManualEntry(false)}
-                >
-                  ค้นหาจากฐานข้อมูล
-                </Button>
-                <Button
-                  type="button"
-                  variant={manualEntry ? "default" : "outline"}
-                  onClick={handleManualEntry}
-                >
-                  กรอกข้อมูลเอง
-                </Button>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="new-patient" 
+                  checked={isNewPatient}
+                  onCheckedChange={setIsNewPatient}
+                />
+                <Label htmlFor="new-patient">ผู้ป่วยใหม่</Label>
               </div>
 
-              {!manualEntry ? (
-                <>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="ค้นหาด้วยชื่อ, HN, หรือเลขบัตรประชาชน"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-
-                  {searchTerm && searchResults.length > 0 && (
-                    <div className="border rounded-md max-h-48 overflow-y-auto">
-                      {searchResults.map((patient) => (
-                        <div
-                          key={patient.id}
-                          onClick={() => handlePatientSelect(patient)}
-                          className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                        >
-                          <div className="font-medium">{patient.full_name}</div>
-                          <div className="text-sm text-gray-500">{patient.hn} | {patient.cid}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {searchTerm && searchResults.length === 0 && (
-                    <div className="text-center py-4 text-gray-500">
-                      ไม่พบผู้ป่วยที่ค้นหา
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">ชื่อ-นามสกุล *</label>
-                    <Input
-                      placeholder="กรอกชื่อ-นามสกุล"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">เลข HN *</label>
-                    <Input
-                      placeholder="กรอกเลข HN"
-                      value={formData.hn}
-                      onChange={(e) => setFormData(prev => ({ ...prev, hn: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">เบอร์โทร</label>
-                    <Input
-                      placeholder="กรอกเบอร์โทร"
-                      value={formData.phone_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">ที่อยู่</label>
-                    <Input
-                      placeholder="กรอกที่อยู่"
-                      value={formData.address}
-                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {selectedPatient && (
-                <div className="bg-blue-50 p-4 rounded-md">
-                  <h4 className="font-medium text-blue-900 mb-2">ข้อมูลผู้ป่วยที่เลือก</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                    <div><span className="font-medium">ชื่อ:</span> {formData.full_name}</div>
-                    <div><span className="font-medium">HN:</span> {formData.hn}</div>
-                    <div><span className="font-medium">เบอร์โทร:</span> {formData.phone_number}</div>
-                    <div className="md:col-span-2"><span className="font-medium">ที่อยู่:</span> {formData.address}</div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>รายละเอียดการนัดหมาย</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">วันที่นัด *</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !appointmentDate && "text-muted-foreground"
-                        )}
-                      >
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {appointmentDate ? format(appointmentDate, "dd/MM/yyyy") : "เลือกวันที่"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CalendarComponent
-                        mode="single"
-                        selected={appointmentDate}
-                        onSelect={setAppointmentDate}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">เวลานัด</label>
+                <div className="space-y-2">
+                  <Label htmlFor="full-name">ชื่อ-นามสกุล *</Label>
                   <Input
-                    type="time"
-                    value={formData.appointment_time}
-                    onChange={(e) => setFormData(prev => ({ ...prev, appointment_time: e.target.value }))}
+                    id="full-name"
+                    value={formData.full_name}
+                    onChange={(e) => handleInputChange('full_name', e.target.value)}
+                    placeholder="กรอกชื่อ-นามสกุล"
+                    required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">ประเภทนัด</label>
-                  <Select value={formData.appointment_type} onValueChange={(value) => setFormData(prev => ({ ...prev, appointment_type: value }))}>
+                <div className="space-y-2">
+                  <Label htmlFor="hn">HN *</Label>
+                  <Input
+                    id="hn"
+                    value={formData.hn}
+                    onChange={(e) => handleInputChange('hn', e.target.value)}
+                    placeholder="เลขประจำตัวผู้ป่วย"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">เบอร์โทรศัพท์</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="หมายเลขโทรศัพท์"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="age">อายุ</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    value={formData.age}
+                    onChange={(e) => handleInputChange('age', e.target.value)}
+                    placeholder="อายุ (ปี)"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>เพศ</Label>
+                <RadioGroup 
+                  value={formData.gender} 
+                  onValueChange={(value) => handleInputChange('gender', value)}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="male" id="male" />
+                    <Label htmlFor="male">ชาย</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="female" id="female" />
+                    <Label htmlFor="female">หญิง</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Appointment Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarCheck className="w-5 h-5" />
+                รายละเอียดการนัด
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="appointment-date">วันที่นัด *</Label>
+                  <Input
+                    id="appointment-date"
+                    type="date"
+                    value={formData.appointment_date}
+                    onChange={(e) => handleInputChange('appointment_date', e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="appointment-time">เวลานัด</Label>
+                  <Input
+                    id="appointment-time"
+                    type="time"
+                    value={formData.appointment_time}
+                    onChange={(e) => handleInputChange('appointment_time', e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="appointment-type">ประเภทการนัด *</Label>
+                  <Select 
+                    value={formData.appointment_type} 
+                    onValueChange={(value) => handleInputChange('appointment_type', value)}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="เลือกประเภทนัด" />
+                      <SelectValue placeholder="เลือกประเภทการนัด" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="นัดใน รพ.">นัดใน รพ.</SelectItem>
-                      <SelectItem value="นัดเยี่ยมนอก รพ.">นัดเยี่ยมนอก รพ.</SelectItem>
+                      <SelectItem value="in">นัดใน รพ.</SelectItem>
+                      <SelectItem value="out">นัดเยี่ยมนอก รพ.</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">ศูนย์บริการ</label>
-                  <Select value={formData.center} onValueChange={(value) => setFormData(prev => ({ ...prev, center: value }))}>
+                <div className="space-y-2">
+                  <Label htmlFor="center">ศูนย์บริการ</Label>
+                  <Select 
+                    value={formData.center} 
+                    onValueChange={(value) => handleInputChange('center', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="เลือกศูนย์บริการ" />
                     </SelectTrigger>
@@ -335,79 +281,77 @@ const NewAppointmentForm = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">ช่วงเวลา</label>
-                  <Select value={formData.time_period} onValueChange={(value) => setFormData(prev => ({ ...prev, time_period: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="เลือกช่วงเวลา" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ในเวลาราชการ">ในเวลาราชการ</SelectItem>
-                      <SelectItem value="นอกเวลาราชการ">นอกเวลาราชการ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">โต๊ะ</label>
-                  <Select value={formData.table_number_display} onValueChange={(value) => setFormData(prev => ({ ...prev, table_number_display: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="เลือกโต๊ะ" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1</SelectItem>
-                      <SelectItem value="2">2</SelectItem>
-                      <SelectItem value="3">3</SelectItem>
-                      <SelectItem value="เคสรวม">เคสรวม</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">แผนก (เลือกได้หลายแผนก)</label>
-                <div className="flex flex-wrap gap-4">
-                  {['กายภาพบำบัด', 'แผนไทย', 'แผนจีน'].map((dept) => (
-                    <div key={dept} className="flex items-center space-x-2">
+              {/* Department Selection */}
+              <div className="space-y-3">
+                <Label>แผนก *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { id: 'กายภาพบำบัด', label: 'กายภาพบำบัด' },
+                    { id: 'แผนไทย', label: 'แผนไทย' },
+                    { id: 'แผนจีน', label: 'แผนจีน' }
+                  ].map((dept) => (
+                    <div key={dept.id} className="flex items-center space-x-2">
                       <Checkbox
-                        id={dept}
-                        checked={formData.departments.includes(dept)}
-                        onCheckedChange={(checked) => handleDepartmentChange(dept, checked as boolean)}
+                        id={dept.id}
+                        checked={formData.departments.includes(dept.id)}
+                        onCheckedChange={(checked) => handleDepartmentChange(dept.id, checked)}
                       />
-                      <label htmlFor={dept} className="text-sm">{dept}</label>
+                      <Label htmlFor={dept.id}>{dept.label}</Label>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">หมายเหตุ</label>
+              {/* Table Number - Show only for กายภาพบำบัด */}
+              {formData.departments.includes('กายภาพบำบัด') && (
+                <div className="space-y-2">
+                  <Label htmlFor="table-number">หมายเลขโต๊ะ</Label>
+                  <Select 
+                    value={formData.table_number?.toString() || ''} 
+                    onValueChange={(value) => handleInputChange('table_number', value ? parseInt(value) : null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="เลือกหมายเลขโต๊ะ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">โต๊ะ 1</SelectItem>
+                      <SelectItem value="2">โต๊ะ 2</SelectItem>
+                      <SelectItem value="3">โต๊ะ 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">หมายเหตุ</Label>
                 <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => handleInputChange('notes', e.target.value)}
                   placeholder="หมายเหตุเพิ่มเติม"
-                  value={formData.note}
-                  onChange={(e) => setFormData(prev => ({ ...prev, note: e.target.value }))}
                   rows={3}
                 />
               </div>
             </CardContent>
           </Card>
 
-          <div className="flex justify-end space-x-4">
+          {/* Submit Button */}
+          <div className="flex gap-4">
+            <Button 
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={addAppointment.isPending}
+            >
+              {addAppointment.isPending ? 'กำลังบันทึก...' : 'บันทึกนัดหมาย'}
+            </Button>
             <Button 
               type="button" 
               variant="outline"
               onClick={() => navigate('/appointments')}
             >
               ยกเลิก
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={(!selectedPatient && !manualEntry) || !appointmentDate || addAppointmentMutation.isPending}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {addAppointmentMutation.isPending ? 'กำลังบันทึก...' : 'บันทึกนัดหมาย'}
             </Button>
           </div>
         </form>
@@ -416,4 +360,4 @@ const NewAppointmentForm = () => {
   );
 };
 
-export default NewAppointmentForm;
+export default AppointmentForm;
