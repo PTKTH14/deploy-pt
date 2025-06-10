@@ -80,20 +80,19 @@ const AppointmentForm = () => {
         return;
       }
 
-      // Prepare data for submission with proper types
+      // Prepare data for submission matching the exact database schema
       const appointmentData = {
         full_name: formData.full_name.trim(),
         hn: formData.hn.trim(),
-        phone_number: formData.phone?.trim() || undefined,
-        age: formData.age ? parseInt(formData.age) : undefined,
+        phone_number: formData.phone?.trim() || null,
         appointment_date: formData.appointment_date,
-        appointment_time: formData.appointment_time || undefined,
+        appointment_time: formData.appointment_time || null,
         appointment_type: formData.appointment_type,
         departments: formData.departments,
-        center: formData.center || undefined,
-        table_number: formData.table_number || undefined,
-        note: formData.notes?.trim() || undefined,
-        status: formData.status as 'new' | 'confirmed' | 'cancelled' | 'completed'
+        center: formData.center || null,
+        table_number: formData.table_number || null,
+        note: formData.notes?.trim() || null,
+        status: 'new' as 'new' | 'processing' | 'done'  // Use correct enum values
       };
 
       console.log('Final appointment data:', appointmentData);
