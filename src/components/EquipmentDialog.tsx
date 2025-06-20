@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,7 +48,10 @@ const EquipmentDialog = ({ isOpen, onClose, patientName, onDispenseEquipment }: 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>จ่ายอุปกรณ์สำหรับ {patientName}</DialogTitle>
+          <DialogTitle>เลือกอุปกรณ์สำหรับ {patientName}</DialogTitle>
+          <DialogDescription>
+            คุณสามารถเลือกอุปกรณ์ที่ต้องการและกำหนดจำนวนสำหรับผู้ป่วยได้ที่นี่
+          </DialogDescription>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">

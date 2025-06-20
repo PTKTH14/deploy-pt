@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,6 +66,9 @@ const AddPatientDialog = ({ open, onOpenChange, onPatientAdded }: AddPatientDial
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>เพิ่มผู้ป่วยใหม่</DialogTitle>
+          <DialogDescription>
+            กรอกข้อมูลผู้ป่วยใหม่เพื่อบันทึกเข้าสู่ระบบ
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -74,6 +73,12 @@ const Patients = () => {
     });
   };
 
+  const statusMap = {
+    'รอการยืนยัน': 'new',
+    'กำลังดำเนินการ': 'processing',
+    'เสร็จเรียบร้อย': 'done'
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -132,22 +137,28 @@ const Patients = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {displayedPatients.map((patient) => (
-            <PatientCard
-              key={patient.id}
-              patient={{
-                ...patient,
-                // แปลง field names ให้ตรงกับที่ PatientCard คาดหวัง
-                right_type: patient.pttype_name || 'ไม่ระบุ',
-                address: patient.full_address || 'ไม่ระบุ'
-              }}
-              onSendToPT={handleSendToPT}
-              onSchedule={handleSchedule}
-              onHomeVisit={handleHomeVisit}
-              onDispenseEquipment={handleDispenseEquipment}
-              onSelectForAppointment={handleSelectForAppointment}
-            />
-          ))}
+          {displayedPatients.length > 0 ? (
+            displayedPatients.map((patient) => (
+              <PatientCard
+                key={patient.id}
+                patient={{
+                  ...patient,
+                  // แปลง field names ให้ตรงกับที่ PatientCard คาดหวัง
+                  right_type: patient.pttype_name || 'ไม่ระบุ',
+                  address: patient.full_address || 'ไม่ระบุ'
+                }}
+                onSendToPT={handleSendToPT}
+                onSchedule={handleSchedule}
+                onHomeVisit={handleHomeVisit}
+                onDispenseEquipment={handleDispenseEquipment}
+                onSelectForAppointment={handleSelectForAppointment}
+              />
+            ))
+          ) : (
+            <div className="text-center py-10 text-gray-500">
+              <p>ไม่พบข้อมูลผู้ป่วยที่ตรงกับเงื่อนไขการค้นหา</p>
+            </div>
+          )}
         </div>
 
         {displayedPatients.length === 0 && searchQuery && (

@@ -8,4 +8,60 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Create the client with retry options
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'x-application-name': 'care-sync-plus'
+    },
+    fetch: (url, options) => {
+      // Custom fetch with retry logic
+      const fetchWithRetry = async (attempts = 3, delay = 1000) => {
+        try {
+          return await fetch(url, options);
+        } catch (error) {
+          if (attempts <= 1) throw error;
+          
+          // Wait for the specified delay
+          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Retry with one less attempt and increased delay (exponential backoff)
+          return fetchWithRetry(attempts - 1, delay * 2);
+        }
+      };
+      
+      return fetchWithRetry();
+    }
+  }
+});
+
+/**
+ * Checks the connection to Supabase by fetching the current user's session.
+ * This is a lightweight and secure way to verify that the client is initialized
+ * and can communicate with the Supabase backend.
+ *
+ * @returns {Promise<{ session: any } | { error: any }>} - An object containing the session or an error.
+ */
+export const checkSupabaseConnection = async () => {
+  try {
+    // Fetching the session is a good way to check connection and auth status.
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error("Supabase connection test failed:", error);
+      throw error;
+    }
+    
+    console.log("Supabase connection test successful. Session data:", data);
+    return { session: data.session };
+  } catch (error) {
+    console.error("An unexpected error occurred during Supabase connection test:", error);
+    // Rethrow the error to be caught by the calling function
+    throw error;
+  }
+};

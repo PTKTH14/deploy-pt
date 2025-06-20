@@ -1,34 +1,66 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AppointmentCalendar from '@/components/AppointmentCalendar';
 import AppointmentTabs from '@/components/AppointmentTabs';
+import AppointmentCalendar from '@/components/AppointmentCalendar';
 
-const CenterTabs = () => {
-  const [activeCenter, setActiveCenter] = useState<'รพ.สต.ต้า' | 'รพ.สต.พระเนตร' | 'ทต.ป่าตาล'>('รพ.สต.ต้า');
+interface CenterTabsProps {
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
+}
 
+const CenterTabs: React.FC<CenterTabsProps> = ({ selectedDate, onDateChange }) => {
   return (
     <div className="space-y-6">
-      <Tabs value={activeCenter} onValueChange={(value) => setActiveCenter(value as any)}>
+      <Tabs defaultValue="center1" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="รพ.สต.ต้า">รพ.สต.ต้า</TabsTrigger>
-          <TabsTrigger value="รพ.สต.พระเนตร">รพ.สต.พระเนตร</TabsTrigger>
-          <TabsTrigger value="ทต.ป่าตาล">ทต.ป่าตาล</TabsTrigger>
+          <TabsTrigger value="center1">รพ.สต.ต้า</TabsTrigger>
+          <TabsTrigger value="center2">รพ.สต.พระเนตร</TabsTrigger>
+          <TabsTrigger value="center3">ทต.ป่าตาล</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="รพ.สต.ต้า" className="space-y-6">
-          <AppointmentTabs department="ศูนย์บริการ" />
-          <AppointmentCalendar department="ศูนย์บริการ" center="รพ.สต.ต้า" />
+        <TabsContent value="center1" className="space-y-6">
+          <AppointmentTabs 
+            department="ศูนย์บริการ" 
+            selectedDate={selectedDate} 
+            onDateChange={onDateChange} 
+            center="รพ.สต.ต้า"
+          />
+          <AppointmentCalendar 
+            department="ศูนย์บริการ" 
+            selectedDate={selectedDate} 
+            onDateChange={onDateChange} 
+            center="รพ.สต.ต้า"
+          />
         </TabsContent>
 
-        <TabsContent value="รพ.สต.พระเนตร" className="space-y-6">
-          <AppointmentTabs department="ศูนย์บริการ" />
-          <AppointmentCalendar department="ศูนย์บริการ" center="รพ.สต.พระเนตร" />
+        <TabsContent value="center2" className="space-y-6">
+          <AppointmentTabs 
+            department="ศูนย์บริการ" 
+            selectedDate={selectedDate} 
+            onDateChange={onDateChange} 
+            center="รพ.สต.พระเนตร"
+          />
+          <AppointmentCalendar 
+            department="ศูนย์บริการ" 
+            selectedDate={selectedDate} 
+            onDateChange={onDateChange} 
+            center="รพ.สต.พระเนตร"
+          />
         </TabsContent>
 
-        <TabsContent value="ทต.ป่าตาล" className="space-y-6">
-          <AppointmentTabs department="ศูนย์บริการ" />
-          <AppointmentCalendar department="ศูนย์บริการ" center="ทต.ป่าตาล" />
+        <TabsContent value="center3" className="space-y-6">
+          <AppointmentTabs 
+            department="ศูนย์บริการ" 
+            selectedDate={selectedDate} 
+            onDateChange={onDateChange} 
+            center="ทต.ป่าตาล"
+          />
+          <AppointmentCalendar 
+            department="ศูนย์บริการ" 
+            selectedDate={selectedDate} 
+            onDateChange={onDateChange} 
+            center="ทต.ป่าตาล"
+          />
         </TabsContent>
       </Tabs>
     </div>

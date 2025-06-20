@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 interface PTTableDialogProps {
@@ -20,7 +19,10 @@ const PTTableDialog = ({ isOpen, onClose, patientName, onSelectTable }: PTTableD
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>เลือกโต๊ะ PT สำหรับ {patientName}</DialogTitle>
+          <DialogTitle>เลือกโต๊ะสำหรับผู้ป่วย</DialogTitle>
+          <DialogDescription>
+            กรุณาเลือกโต๊ะที่ต้องการสำหรับให้บริการผู้ป่วยรายนี้
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-3 gap-4 py-4">
           {[1, 2, 3].map((tableNumber) => (

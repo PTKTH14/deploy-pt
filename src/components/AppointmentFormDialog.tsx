@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,10 +65,10 @@ const AppointmentFormDialog = ({ open, onOpenChange, selectedPatient }: Appointm
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            สร้างนัดหมาย
-          </DialogTitle>
+          <DialogTitle>{selectedPatient ? 'แก้ไขนัดหมาย' : 'สร้างนัดหมายใหม่'}</DialogTitle>
+          <DialogDescription>
+            {selectedPatient ? 'แก้ไขข้อมูลนัดหมายสำหรับผู้ป่วย' : 'กรอกรายละเอียดเพื่อสร้างนัดหมายใหม่ในระบบ'}
+          </DialogDescription>
         </DialogHeader>
 
         {selectedPatient && (

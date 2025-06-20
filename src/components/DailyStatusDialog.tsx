@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -309,9 +308,9 @@ const DailyStatusDialog: React.FC<DailyStatusDialogProps> = ({ user, onComplete 
     <Dialog open={true}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>ข้อมูลสถานะรายวัน</DialogTitle>
+          <DialogTitle>อัปเดตสถานะประจำวัน</DialogTitle>
           <DialogDescription>
-            กรุณากรอกข้อมูลสำหรับวันนี้ ({format(new Date(), 'dd/MM/yyyy', { locale: th })})
+            กรุณาเลือกสถานะการทำงานและศูนย์บริการของคุณสำหรับวันนี้
           </DialogDescription>
         </DialogHeader>
 
